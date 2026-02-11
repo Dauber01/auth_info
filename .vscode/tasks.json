@@ -1,0 +1,272 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "生成 Proto 代码",
+      "type": "shell",
+      "command": "${workspaceFolder}/make.bat",
+      "args": ["proto"],
+      "windows": {
+        "command": "${workspaceFolder}/make.bat",
+        "args": ["proto"]
+      },
+      "linux": {
+        "command": "make",
+        "args": ["proto"]
+      },
+      "osx": {
+        "command": "make",
+        "args": ["proto"]
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "生成 Wire 代码",
+      "type": "shell",
+      "command": "${workspaceFolder}/make.bat",
+      "args": ["wire"],
+      "windows": {
+        "command": "${workspaceFolder}/make.bat",
+        "args": ["wire"]
+      },
+      "linux": {
+        "command": "make",
+        "args": ["wire"]
+      },
+      "osx": {
+        "command": "make",
+        "args": ["wire"]
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "编译项目",
+      "type": "shell",
+      "command": "${workspaceFolder}/make.bat",
+      "args": ["build"],
+      "windows": {
+        "command": "${workspaceFolder}/make.bat",
+        "args": ["build"]
+      },
+      "linux": {
+        "command": "make",
+        "args": ["build"]
+      },
+      "osx": {
+        "command": "make",
+        "args": ["build"]
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": [
+        "$go"
+      ]
+    },
+    {
+      "label": "运行项目",
+      "type": "shell",
+      "command": "${workspaceFolder}/bin/auth_info.exe",
+      "args": [
+        "-config",
+        "${workspaceFolder}/config"
+      ],
+      "windows": {
+        "command": "${workspaceFolder}/bin/auth_info.exe"
+      },
+      "linux": {
+        "command": "${workspaceFolder}/bin/auth_info"
+      },
+      "osx": {
+        "command": "${workspaceFolder}/bin/auth_info"
+      },
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "清理构建文件",
+      "type": "shell",
+      "command": "${workspaceFolder}/make.bat",
+      "args": ["clean"],
+      "windows": {
+        "command": "${workspaceFolder}/make.bat",
+        "args": ["clean"]
+      },
+      "linux": {
+        "command": "make",
+        "args": ["clean"]
+      },
+      "osx": {
+        "command": "make",
+        "args": ["clean"]
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "运行测试 (verbose)",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "test",
+        "-v",
+        "./..."
+      ],
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": [
+        "$go"
+      ]
+    },
+    {
+      "label": "运行测试并生成覆盖率报告",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "test",
+        "-v",
+        "-coverprofile=coverage.out",
+        "./..."
+      ],
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": [
+        "$go"
+      ]
+    },
+    {
+      "label": "查看测试覆盖率",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "tool",
+        "cover",
+        "-html=coverage.out"
+      ],
+      "group": "test",
+      "presentation": {
+        "reveal": "never",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "格式化代码",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "fmt",
+        "./..."
+      ],
+      "group": "build",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "代码检查 (vet)",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "vet",
+        "./..."
+      ],
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": [
+        "$go"
+      ]
+    },
+    {
+      "label": "更新依赖",
+      "type": "shell",
+      "command": "${workspaceFolder}/make.bat",
+      "args": ["mod-tidy"],
+      "windows": {
+        "command": "${workspaceFolder}/make.bat",
+        "args": ["mod-tidy"]
+      },
+      "linux": {
+        "command": "make",
+        "args": ["mod-tidy"]
+      },
+      "osx": {
+        "command": "make",
+        "args": ["mod-tidy"]
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "完整构建 (all)",
+      "type": "shell",
+      "command": "${workspaceFolder}/make.bat",
+      "args": ["all"],
+      "windows": {
+        "command": "${workspaceFolder}/make.bat",
+        "args": ["all"]
+      },
+      "linux": {
+        "command": "make",
+        "args": ["all"]
+      },
+      "osx": {
+        "command": "make",
+        "args": ["all"]
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": [
+        "$go"
+      ],
+      "dependsOn": [
+        "清理构建文件",
+        "生成 Proto 代码",
+        "生成 Wire 代码"
+      ],
+      "dependsOrder": "sequence"
+    }
+  ]
+}

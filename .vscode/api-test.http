@@ -1,0 +1,45 @@
+### REST API 测试文件
+### 使用 REST Client 扩展进行测试
+### https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+
+@baseUrl = http://localhost:8080
+@grpcUrl = localhost:9080
+
+### 测试 Hello 接口
+GET {{baseUrl}}/api/v1/hello HTTP/1.1
+Content-Type: application/json
+
+###
+
+### 测试 Swagger 文档
+GET {{baseUrl}}/swagger/index.html HTTP/1.1
+
+###
+
+### 测试健康检查（待实现）
+GET {{baseUrl}}/health HTTP/1.1
+
+###
+
+### 测试 POST 请求示例（待实现）
+POST {{baseUrl}}/api/v1/users HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "张三",
+  "email": "zhangsan@example.com"
+}
+
+###
+
+### 测试带查询参数的 GET 请求
+GET {{baseUrl}}/api/v1/hello?name=World HTTP/1.1
+
+###
+
+### 测试带认证头的请求示例（待实现）
+GET {{baseUrl}}/api/v1/protected HTTP/1.1
+Authorization: Bearer your-token-here
+Content-Type: application/json
+
+###

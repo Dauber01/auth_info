@@ -1,0 +1,45 @@
+{
+  "recommendations": [
+    // Go 语言开发
+    "golang.go",
+    "golang.go-nightly",
+
+    // Protocol Buffers
+    "zxh404.vscode-proto3",
+
+    // 代码质量和分析
+    "ms-vscode.makefile-tools",
+    "eamodio.gitlens",
+
+    // Docker 支持（可选）
+    "ms-azuretools.vscode-docker",
+
+    // JSON/YAML 支持
+    "redhat.vscode-yaml",
+    "eriklynd.json-tools",
+
+    // REST 客户端测试
+    "humao.rest-client",
+
+    // Git 相关
+    "donjayamanne.githistory",
+
+    // 代码片段和快捷方式
+    "golang.go-pack",
+
+    // Markdown 预览
+    "shd101wyy.markdown-preview-enhanced",
+
+    // 代码美化
+    "esbenp.prettier-vscode",
+
+    // 主题（可选）
+    "GitHub.github-vscode-theme",
+    "dracula-theme.theme-dracula",
+
+    // 其他辅助工具
+    "usernamehw.errorlens",
+    "tamasfe.even-better-toml",
+    "ms-vscode.makefile-tools"
+  ]
+}

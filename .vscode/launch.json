@@ -1,0 +1,106 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "启动主程序",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/main",
+      "args": [
+        "-config",
+        "${workspaceFolder}/config"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {},
+      "showLog": true,
+      "trace": "verbose"
+    },
+    {
+      "name": "调试当前文件",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${file}",
+      "cwd": "${workspaceFolder}",
+      "env": {},
+      "showLog": true
+    },
+    {
+      "name": "调试当前测试",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}",
+      "args": [
+        "-test.v"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {},
+      "showLog": true
+    },
+    {
+      "name": "调试当前测试（单个测试函数）",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}/${relativeFileDirname}",
+      "args": [
+        "-test.run",
+        "^${selectedText}$",
+        "-test.v"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {},
+      "showLog": true
+    },
+    {
+      "name": "附加到进程",
+      "type": "go",
+      "request": "attach",
+      "mode": "local",
+      "processId": 0
+    },
+    {
+      "name": "调试 Proto 生成",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/bin/protoc",
+      "args": [
+        "--go_out=${workspaceFolder}/api/gen",
+        "--go_opt=paths=source_relative",
+        "--go-grpc_out=${workspaceFolder}/api/gen",
+        "--go-grpc_opt=paths=source_relative",
+        "${workspaceFolder}/api/proto/*.proto"
+      ],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "调试 Wire 生成",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "github.com/google/wire/cmd/wire",
+      "args": [
+        "${workspaceFolder}/internal/app"
+      ],
+      "cwd": "${workspaceFolder}",
+      "showLog": true
+    },
+    {
+      "name": "启动并等待 Delve",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/main",
+      "args": [
+        "-config",
+        "${workspaceFolder}/config"
+      ],
+      "cwd": "${workspaceFolder}",
+      "apiVersion": 2,
+      "dlvToolPath": "${env:GOPATH}/bin/dlv"
+    }
+  ]
+}

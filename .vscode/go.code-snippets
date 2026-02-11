@@ -1,0 +1,140 @@
+{
+  "Go Handler Function": {
+    "prefix": "handler",
+    "body": [
+      "// ${1:FunctionName}",
+      "// @Summary ${2:简要描述}",
+      "// @Description ${3:详细描述}",
+      "// @Tags ${4:Tag}",
+      "// @Accept json",
+      "// @Produce json",
+      "// @Success 200 {object} map[string]interface{}",
+      "// @Router /${5:path} [${6:get}]",
+      "func (h *${7:Handler}) ${1:FunctionName}(c *gin.Context) {",
+      "\t${8:// TODO: 实现逻辑}",
+      "\tc.JSON(http.StatusOK, gin.H{",
+      "\t\t\"code\":    http.StatusOK,",
+      "\t\t\"message\": \"success\",",
+      "\t\t\"data\":    nil,",
+      "\t})",
+      "}"
+    ],
+    "description": "创建 Gin Handler 函数（带 Swagger 注释）"
+  },
+  "Go Service Function": {
+    "prefix": "service",
+    "body": [
+      "// ${1:FunctionName} ${2:函数描述}",
+      "func (s *${3:Service}) ${1:FunctionName}(ctx context.Context, ${4:params}) (${5:result}, error) {",
+      "\t${6:// TODO: 实现业务逻辑}",
+      "\treturn ${7:nil}, nil",
+      "}"
+    ],
+    "description": "创建 Service 层函数"
+  },
+  "Go Test Function": {
+    "prefix": "test",
+    "body": [
+      "func Test${1:FunctionName}(t *testing.T) {",
+      "\ttests := []struct {",
+      "\t\tname    string",
+      "\t\t${2:input}   ${3:type}",
+      "\t\twant    ${4:type}",
+      "\t\twantErr bool",
+      "\t}{",
+      "\t\t{",
+      "\t\t\tname: \"${5:test case 1}\",",
+      "\t\t\t${2:input}: ${6:value},",
+      "\t\t\twant: ${7:expected},",
+      "\t\t\twantErr: false,",
+      "\t\t},",
+      "\t}",
+      "\tfor _, tt := range tests {",
+      "\t\tt.Run(tt.name, func(t *testing.T) {",
+      "\t\t\t${8:// TODO: 测试逻辑}",
+      "\t\t})",
+      "\t}",
+      "}"
+    ],
+    "description": "创建表驱动测试函数"
+  },
+  "Go Error Check": {
+    "prefix": "iferr",
+    "body": [
+      "if err != nil {",
+      "\t${1:return err}",
+      "}"
+    ],
+    "description": "错误检查"
+  },
+  "Go gRPC Service": {
+    "prefix": "grpcservice",
+    "body": [
+      "type ${1:Service}Server struct {",
+      "\tlogger *zap.Logger",
+      "}",
+      "",
+      "// New${1:Service}Server 创建 ${1:Service}Server 实例",
+      "func New${1:Service}Server() *${1:Service}Server {",
+      "\treturn &${1:Service}Server{",
+      "\t\tlogger: logger.GetLogger(),",
+      "\t}",
+      "}",
+      "",
+      "// ${2:MethodName} 实现 ${2:MethodName} 方法",
+      "func (s *${1:Service}Server) ${2:MethodName}(ctx context.Context, req *${3:Request}) (*${4:Response}, error) {",
+      "\ts.logger.Info(\"${2:MethodName} called\")",
+      "\t${5:// TODO: 实现逻辑}",
+      "\treturn &${4:Response}{}, nil",
+      "}"
+    ],
+    "description": "创建 gRPC 服务实现"
+  },
+  "Go Logger": {
+    "prefix": "log",
+    "body": [
+      "logger.GetLogger().${1|Info,Debug,Warn,Error|}(\"${2:message}\", zap.${3|String,Int,Bool,Any|}(\"${4:key}\", ${5:value}))"
+    ],
+    "description": "添加日志记录"
+  },
+  "Go Struct with JSON tags": {
+    "prefix": "struct",
+    "body": [
+      "type ${1:StructName} struct {",
+      "\t${2:FieldName} ${3:string} `json:\"${4:field_name}\" binding:\"${5:required}\"`",
+      "}"
+    ],
+    "description": "创建带 JSON 标签的结构体"
+  },
+  "Go Wire Provider": {
+    "prefix": "wire",
+    "body": [
+      "// Provider${1:Name} 是 ${1:Name} 的 Wire Provider",
+      "var Provider${1:Name} = wire.NewSet(",
+      "\tNew${2:Service},",
+      ")"
+    ],
+    "description": "创建 Wire Provider"
+  },
+  "Proto Message": {
+    "prefix": "protomessage",
+    "body": [
+      "// ${1:MessageName} ${2:消息描述}",
+      "message ${1:MessageName} {",
+      "\t${3:string} ${4:field_name} = 1;",
+      "}"
+    ],
+    "description": "创建 Proto 消息定义"
+  },
+  "Proto Service": {
+    "prefix": "protoservice",
+    "body": [
+      "// ${1:ServiceName} ${2:服务描述}",
+      "service ${1:ServiceName} {",
+      "\t// ${3:MethodName} ${4:方法描述}",
+      "\trpc ${3:MethodName}(${5:Request}) returns (${6:Response});",
+      "}"
+    ],
+    "description": "创建 Proto 服务定义"
+  }
+}

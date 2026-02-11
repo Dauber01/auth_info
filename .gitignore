@@ -1,0 +1,62 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+
+# IDE specific files
+# .vscode/ 目录中的文件是提交到版本控制中的项目配置
+.idea/
+.idea_modules/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+*.swp
+*.swo
+*~
+
+# VS Code 用户工作区设置（不提交）
+.vscode/settings.local.json
+.vscode/.history/
+
+# Dependencies
+vendor/
+
+# Log files
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+/bin/
+
+# Generated proto files
+/api/gen/*.pb.go
+/api/gen/*_grpc.pb.go
+
+# Swagger generated files
+/docs/
+
+# Test coverage
+coverage.out
+coverage.html
+
+# IDE workspace files
+*.code-workspace
+
+
