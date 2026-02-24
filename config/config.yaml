@@ -5,3 +5,18 @@ server:
 log:
   level: debug
   format: json
+
+mysql:
+  host: localhost
+  port: 3306
+  user: root
+  password: "password"
+  dbname: auth_info
+  charset: utf8mb4
+
+jwt:
+  secret: "change-this-secret-in-production"
+  expire: 24  # hours
+
+casbin:
+  model: "config/rbac_model.conf"

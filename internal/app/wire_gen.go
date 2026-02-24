@@ -7,15 +7,32 @@
 package app
 
 import (
+	"auth_info/internal/biz"
 	"auth_info/internal/config"
+	"auth_info/internal/data"
+	"auth_info/internal/handler"
+	"auth_info/internal/service"
 )
 
 // Injectors from wire.go:
 
 func InitializeApp(cfg *config.Config) (*App, error) {
-	app, err := NewApp(cfg)
+	db, err := data.NewDB(cfg)
 	if err != nil {
 		return nil, err
 	}
-	return app, nil
+	enforcer, err := data.NewEnforcer(db, cfg)
+	if err != nil {
+		return nil, err
+	}
+	authUseCase := biz.NewAuthUseCase(db, cfg)
+	helloUseCase := biz.NewHelloUseCase()
+	helloHandler := handler.NewHelloHandler(helloUseCase)
+	authHandler := handler.NewAuthHandler(authUseCase)
+	helloService := service.NewHelloService(helloUseCase)
+	application, err := NewApp(cfg, authUseCase, enforcer, helloHandler, authHandler, helloService)
+	if err != nil {
+		return nil, err
+	}
+	return application, nil
 }

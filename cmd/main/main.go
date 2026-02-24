@@ -22,8 +22,8 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// 初始化应用
-	application, err := app.NewApp(cfg)
+	// 初始化应用（由 Wire 完成依赖注入）
+	application, err := app.InitializeApp(cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize app: %v", err)
 	}

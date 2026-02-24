@@ -4,16 +4,18 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
-	"auth_info/internal/logger"
+
+	"auth_info/internal/biz"
 )
 
+// HelloHandler HTTP 请求处理器
 type HelloHandler struct {
+	uc *biz.HelloUseCase
 }
 
-// NewHelloHandler 创建 HelloHandler 实例
-func NewHelloHandler() *HelloHandler {
-	return &HelloHandler{}
+// NewHelloHandler Wire Provider
+func NewHelloHandler(uc *biz.HelloUseCase) *HelloHandler {
+	return &HelloHandler{uc: uc}
 }
 
 // Hello
@@ -22,16 +24,18 @@ func NewHelloHandler() *HelloHandler {
 // @Tags Hello
 // @Accept json
 // @Produce json
+// @Param name query string false "名字"
 // @Success 200 {object} map[string]interface{}
 // @Router /hello [get]
 func (h *HelloHandler) Hello(c *gin.Context) {
-	logger.GetLogger().Info("Hello handler called", zap.String("path", c.Request.URL.Path))
+	name := c.Query("name")
+	msg := h.uc.SayHello(name)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code":    http.StatusOK,
 		"message": "success",
 		"data": gin.H{
-			"message": "Hello, World!",
+			"message": msg,
 		},
 	})
 }

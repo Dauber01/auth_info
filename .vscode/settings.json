@@ -4,8 +4,7 @@
   "go.autocompleteUnimportedPackages": true,
   "go.gocodePackageLookupMode": "go",
   "go.inferGopath": false,
-  "go.buildOnSave": "off",
-  "go.lintOnSave": "package",
+"go.lintOnSave": "package",
   "go.vetOnSave": "package",
 
   // Go 测试设置 - 使用 -v 参数显示详细输出
@@ -59,7 +58,7 @@
 
   // gopls 服务器配置
   "gopls": {
-    "ui.completion.usePlaceholders": true,
+"ui.completion.usePlaceholders": true,
     "ui.diagnostic.analyses": {
       "composites": false,
       "unusedparams": true,

@@ -7,6 +7,9 @@ import (
 type Config struct {
 	Server ServerConfig `mapstructure:"server"`
 	Log    LogConfig    `mapstructure:"log"`
+	MySQL  MySQLConfig  `mapstructure:"mysql"`
+	JWT    JWTConfig    `mapstructure:"jwt"`
+	Casbin CasbinConfig `mapstructure:"casbin"`
 }
 
 type ServerConfig struct {
@@ -17,6 +20,24 @@ type ServerConfig struct {
 type LogConfig struct {
 	Level  string `mapstructure:"level"`
 	Format string `mapstructure:"format"`
+}
+
+type MySQLConfig struct {
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	DBName   string `mapstructure:"dbname"`
+	Charset  string `mapstructure:"charset"`
+}
+
+type JWTConfig struct {
+	Secret string `mapstructure:"secret"`
+	Expire int    `mapstructure:"expire"` // hours
+}
+
+type CasbinConfig struct {
+	Model string `mapstructure:"model"`
 }
 
 func LoadConfig(path string) (*Config, error) {
