@@ -26,6 +26,7 @@ func NewHelloHandler(uc *biz.HelloUseCase) *HelloHandler {
 // @Produce json
 // @Param name query string false "名字"
 // @Success 200 {object} map[string]interface{}
+// @Security BearerAuth
 // @Router /hello [get]
 func (h *HelloHandler) Hello(c *gin.Context) {
 	name := c.Query("name")

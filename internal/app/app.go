@@ -34,6 +34,7 @@ func NewApp(
 	helloHandler *handler.HelloHandler,
 	authHandler *handler.AuthHandler,
 	helloSvc *service.HelloService,
+	dictHandler *handler.DictHandler,
 ) (*App, error) {
 	if err := logger.InitLogger(cfg.Log.Level); err != nil {
 		return nil, err
@@ -62,6 +63,19 @@ func NewApp(
 		protected.Use(middleware.CasbinAuth(enforcer))
 		{
 			protected.GET("/hello", helloHandler.Hello)
+
+			dict := protected.Group("/dict")
+			{
+				dict.GET("/types", dictHandler.ListDictTypes)
+				dict.POST("/types", dictHandler.CreateDictType)
+				dict.PUT("/types/:id", dictHandler.UpdateDictType)
+				dict.DELETE("/types/:id", dictHandler.DeleteDictType)
+
+				dict.GET("/items", dictHandler.ListDictItems)
+				dict.POST("/items", dictHandler.CreateDictItem)
+				dict.PUT("/items/:id", dictHandler.UpdateDictItem)
+				dict.DELETE("/items/:id", dictHandler.DeleteDictItem)
+			}
 		}
 	}
 

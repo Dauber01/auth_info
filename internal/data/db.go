@@ -30,7 +30,7 @@ func NewDB(cfg *config.Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("connect mysql: %w", err)
 	}
 
-	if err = db.AutoMigrate(&model.User{}); err != nil {
+	if err = db.AutoMigrate(&model.User{}, &model.DictType{}, &model.DictItem{}); err != nil {
 		return nil, fmt.Errorf("auto migrate: %w", err)
 	}
 
@@ -66,6 +66,8 @@ func seedDefaultPolicies(e *casbin.Enforcer) {
 	policies := [][]string{
 		{"admin", "/api/v1/*", "*"},
 		{"user", "/api/v1/hello", "GET"},
+		{"user", "/api/v1/dict/types", "GET"},
+		{"user", "/api/v1/dict/items", "GET"},
 	}
 	for _, p := range policies {
 		if ok, _ := e.HasPolicy(p[0], p[1], p[2]); !ok {

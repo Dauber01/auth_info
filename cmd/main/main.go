@@ -1,5 +1,14 @@
 package main
 
+// @title           Auth Info API
+// @version         1.0
+// @description     Auth Info Service API Documentation
+// @host            localhost:8080
+// @BasePath        /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in              header
+// @name            Authorization
+
 import (
 	"flag"
 	"log"
@@ -7,6 +16,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "auth_info/docs" // 注册 Swagger 文档
 	"auth_info/internal/app"
 	"auth_info/internal/config"
 )
