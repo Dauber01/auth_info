@@ -35,6 +35,7 @@ func NewApp(
 	authHandler *handler.AuthHandler,
 	helloSvc *service.HelloService,
 	dictHandler *handler.DictHandler,
+	documentHandler *handler.DocumentHandler,
 ) (*App, error) {
 	if err := logger.InitLogger(cfg.Log.Level); err != nil {
 		return nil, err
@@ -75,6 +76,11 @@ func NewApp(
 				dict.POST("/items", dictHandler.CreateDictItem)
 				dict.PUT("/items/:id", dictHandler.UpdateDictItem)
 				dict.DELETE("/items/:id", dictHandler.DeleteDictItem)
+			}
+
+			doc := protected.Group("/document")
+			{
+				doc.POST("/generate-pdf", documentHandler.GeneratePDF)
 			}
 		}
 	}

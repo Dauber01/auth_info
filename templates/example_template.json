@@ -1,0 +1,37 @@
+{
+  "title": "{{.DocumentTitle}}",
+  "sections": [
+    {
+      "type": "paragraph",
+      "content": "客户姓名：{{.Name}}",
+      "font_size": 14,
+      "bold": true
+    },
+    {
+      "type": "paragraph",
+      "content": "日期：{{.Date}}",
+      "font_size": 12,
+      "bold": false
+    },
+    {
+      "type": "table",
+      "headers": ["项目", "金额", "备注"],
+      "rows": [
+        ["{{.Item1}}", "{{.Amount1}}", "{{.Note1}}"],
+        ["{{.Item2}}", "{{.Amount2}}", "{{.Note2}}"]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": "签名：",
+      "font_size": 12,
+      "bold": false
+    },
+    {
+      "type": "image",
+      "data": "{{.SignatureBase64}}",
+      "width": 60.0,
+      "height": 30.0
+    }
+  ]
+}

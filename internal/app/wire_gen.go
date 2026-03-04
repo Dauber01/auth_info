@@ -28,11 +28,13 @@ func InitializeApp(cfg *config.Config) (*App, error) {
 	authUseCase := biz.NewAuthUseCase(db, cfg)
 	helloUseCase := biz.NewHelloUseCase()
 	dictUseCase := biz.NewDictUseCase(db)
+	documentUseCase := biz.NewDocumentUseCase()
 	helloHandler := handler.NewHelloHandler(helloUseCase)
 	authHandler := handler.NewAuthHandler(authUseCase)
 	dictHandler := handler.NewDictHandler(dictUseCase)
+	documentHandler := handler.NewDocumentHandler(documentUseCase)
 	helloService := service.NewHelloService(helloUseCase)
-	application, err := NewApp(cfg, authUseCase, enforcer, helloHandler, authHandler, helloService, dictHandler)
+	application, err := NewApp(cfg, authUseCase, enforcer, helloHandler, authHandler, helloService, dictHandler, documentHandler)
 	if err != nil {
 		return nil, err
 	}

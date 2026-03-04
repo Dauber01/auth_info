@@ -21,10 +21,12 @@ func InitializeApp(cfg *config.Config) (*App, error) {
 		biz.NewHelloUseCase,
 		biz.NewAuthUseCase,
 		biz.NewDictUseCase,
+		biz.NewDocumentUseCase,
 		// handler 层
 		handler.NewHelloHandler,
 		handler.NewAuthHandler,
 		handler.NewDictHandler,
+		handler.NewDocumentHandler,
 		// service 层（gRPC）
 		service.NewHelloService,
 		// app 装配
