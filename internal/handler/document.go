@@ -66,3 +66,47 @@ func (h *DocumentHandler) GeneratePDF(c *gin.Context) {
 func isNotFoundErr(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "template not found")
 }
+
+type generateWordRequest struct {
+	TemplateName string         `json:"template_name" binding:"required"`
+	Data         map[string]any `json:"data"           binding:"required"`
+}
+
+// GenerateWord 生成 Word 文档
+// @Summary  生成 Word 文档
+// @Tags     Document
+// @Accept   json
+// @Produce  application/vnd.openxmlformats-officedocument.wordprocessingml.document
+// @Param    body body generateWordRequest true "模板名称和填充数据"
+// @Success  200  {file}   binary "Word 文件流"
+// @Failure  400  {object} map[string]any "参数错误"
+// @Failure  404  {object} map[string]any "模板不存在"
+// @Failure  500  {object} map[string]any "生成失败"
+// @Security BearerAuth
+// @Router   /document/generate-word [post]
+func (h *DocumentHandler) GenerateWord(c *gin.Context) {
+	var req generateWordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	wordBytes, err := h.uc.GenerateWord(req.TemplateName, req.Data)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if isNotFoundErr(err) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{
+			"code":    status,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.Header("Content-Disposition", `attachment; filename="document.docx"`)
+	c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", wordBytes)
+}

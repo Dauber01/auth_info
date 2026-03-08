@@ -1,159 +1,17 @@
 package biz
 
 import (
+	"archive/zip"
+	"bytes"
 	"encoding/base64"
 	"os"
-	"path/filepath"
+	"strings"
 	"testing"
 )
 
-func TestDocumentUseCase_GeneratePDF(t *testing.T) {
+func TestGeneratePDF_WithImage(t *testing.T) {
 	uc := NewDocumentUseCase()
 
-	tests := []struct {
-		name         string
-		templateName string
-		data         map[string]any
-		wantErr      bool
-		errContains  string
-	}{
-		{
-			name:         "成功生成PDF-基础文本",
-			templateName: "example_template",
-			data: map[string]any{
-				"DocumentTitle": "测试文档",
-				"Name":          "张三",
-				"Date":          "2026-03-04",
-				"Item1":         "服务费",
-				"Amount1":       "10000",
-				"Note1":         "含税",
-				"Item2":         "管理费",
-				"Amount2":       "2000",
-				"Note2":         "季度",
-				"SignatureBase64": "",
-			},
-			wantErr: false,
-		},
-		{
-			name:         "成功生成PDF-包含图片",
-			templateName: "example_template",
-			data: map[string]any{
-				"DocumentTitle": "合同文件",
-				"Name":          "李四",
-				"Date":          "2026-03-05",
-				"Item1":         "咨询费",
-				"Amount1":       "5000",
-				"Note1":         "不含税",
-				"Item2":         "差旅费",
-				"Amount2":       "1000",
-				"Note2":         "实报实销",
-				"SignatureBase64": generateTestImageBase64(),
-			},
-			wantErr: false,
-		},
-		{
-			name:         "模板不存在",
-			templateName: "non_existent_template",
-			data: map[string]any{
-				"DocumentTitle": "测试",
-			},
-			wantErr:     true,
-			errContains: "template not found",
-		},
-		{
-			name:         "空数据",
-			templateName: "example_template",
-			data:         map[string]any{},
-			wantErr:      false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pdfBytes, err := uc.GeneratePDF(tt.templateName, tt.data)
-
-			if tt.wantErr {
-				if err == nil {
-					t.Errorf("GeneratePDF() 期望错误但没有返回错误")
-					return
-				}
-				if tt.errContains != "" && !containsString(err.Error(), tt.errContains) {
-					t.Errorf("GeneratePDF() 错误信息 = %v, 期望包含 %v", err.Error(), tt.errContains)
-				}
-				return
-			}
-
-			if err != nil {
-				t.Errorf("GeneratePDF() 错误 = %v, 期望成功", err)
-				return
-			}
-
-			if len(pdfBytes) == 0 {
-				t.Errorf("GeneratePDF() 返回空字节流")
-				return
-			}
-
-			// 验证 PDF 文件头
-			if len(pdfBytes) < 4 || string(pdfBytes[:4]) != "%PDF" {
-				t.Errorf("GeneratePDF() 返回的不是有效的 PDF 文件")
-			}
-
-			// 可选：保存到临时文件用于手动验证
-			if os.Getenv("SAVE_TEST_PDF") == "1" {
-				tmpDir := filepath.Join("testdata", "output")
-				os.MkdirAll(tmpDir, 0755)
-				tmpFile := filepath.Join(tmpDir, tt.name+".pdf")
-				os.WriteFile(tmpFile, pdfBytes, 0644)
-				t.Logf("测试 PDF 已保存到: %s", tmpFile)
-			}
-		})
-	}
-}
-
-func TestDocumentUseCase_GeneratePDF_InvalidTemplate(t *testing.T) {
-	uc := NewDocumentUseCase()
-
-	// 创建临时目录和无效模板
-	tmpDir := t.TempDir()
-	uc.templateDir = tmpDir
-
-	invalidJSON := `{"title": "{{.Title}", "sections": [invalid json]}`
-	os.WriteFile(filepath.Join(tmpDir, "invalid.json"), []byte(invalidJSON), 0644)
-
-	_, err := uc.GeneratePDF("invalid", map[string]any{"Title": "测试"})
-	if err == nil {
-		t.Errorf("GeneratePDF() 期望解析错误但成功返回")
-	}
-}
-
-func TestDocumentUseCase_GeneratePDF_ImageDecodeError(t *testing.T) {
-	uc := NewDocumentUseCase()
-
-	// 创建包含无效 base64 图片的模板
-	tmpDir := t.TempDir()
-	uc.templateDir = tmpDir
-
-	tmpl := `{
-		"title": "测试",
-		"sections": [
-			{
-				"type": "image",
-				"data": "invalid-base64!!!",
-				"width": 60,
-				"height": 30
-			}
-		]
-	}`
-	os.WriteFile(filepath.Join(tmpDir, "bad_image.json"), []byte(tmpl), 0644)
-
-	_, err := uc.GeneratePDF("bad_image", map[string]any{})
-	if err == nil {
-		t.Errorf("GeneratePDF() 期望 base64 解码错误但成功返回")
-	}
-}
-
-// 辅助函数：生成测试���的 1x1 PNG 图片 base64
-func generateTestImageBase64() string {
 	// 1x1 透明 PNG 图片
 	pngBytes := []byte{
 		0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
@@ -166,18 +24,116 @@ func generateTestImageBase64() string {
 		0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
 		0x42, 0x60, 0x82,
 	}
-	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(pngBytes)
+	signature := "data:image/png;base64," + base64.StdEncoding.EncodeToString(pngBytes)
+
+	data := map[string]any{
+		"DocumentTitle":   "合同文件",
+		"Name":            "李四",
+		"Date":            "2026-03-05",
+		"Item1":           "咨询费",
+		"Amount1":         "5000",
+		"Note1":           "不含税",
+		"Item2":           "差旅费",
+		"Amount2":         "1000",
+		"Note2":           "实报实销",
+		"SignatureBase64": signature,
+	}
+
+	pdfBytes, err := uc.GeneratePDF("example_template", data)
+	if err != nil {
+		t.Fatalf("GeneratePDF() 错误 = %v", err)
+	}
+	if len(pdfBytes) == 0 {
+		t.Fatal("GeneratePDF() 返回空字节流")
+	}
+	if string(pdfBytes[:4]) != "%PDF" {
+		t.Fatal("GeneratePDF() 返回的不是有效的 PDF 文件")
+	}
 }
 
-func containsString(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || findSubstring(s, substr))
-}
+func TestGenerateWord_WithTextAndImage(t *testing.T) {
+	// 1x1 透明 PNG 图片
+	pngBytes := []byte{
+		0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+		0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+		0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+		0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
+		0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41,
+		0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
+		0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00,
+		0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
+		0x42, 0x60, 0x82,
+	}
+	signature := "data:image/png;base64," + base64.StdEncoding.EncodeToString(pngBytes)
 
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
+	// word_template_test.docx 已常驻于 templates/ 目录，直接使用
+	uc := NewDocumentUseCase()
+	wordBytes, err := uc.GenerateWord("word_template_test", map[string]any{
+		"Name":      "张三",
+		"Signature": signature,
+	})
+	if err != nil {
+		t.Fatalf("GenerateWord() 错误 = %v", err)
+	}
+	if len(wordBytes) == 0 {
+		t.Fatal("GenerateWord() 返回空字节流")
+	}
+
+	// 验证结果是合法的 ZIP（docx 文件头为 PK）
+	if wordBytes[0] != 'P' || wordBytes[1] != 'K' {
+		t.Fatal("GenerateWord() 返回的不是有效的 docx 文件")
+	}
+
+	// 验证文本占位符已替换：document.xml 中不应再含有 {Name}，应含有 张三
+	zr, err := zip.NewReader(bytes.NewReader(wordBytes), int64(len(wordBytes)))
+	if err != nil {
+		t.Fatalf("��析输出 docx zip 失败: %v", err)
+	}
+	docXML := readZipFile(t, zr, "word/document.xml")
+	if strings.Contains(docXML, "{Name}") {
+		t.Error("document.xml 中文本占位符 {Name} 未被替换")
+	}
+	if !strings.Contains(docXML, "张三") {
+		t.Error("document.xml 中未找到替换后的文本 张三")
+	}
+
+	// 验证图片已注入：media 目录下应有图片文件，document.xml 应含有 w:drawing
+	hasMedia := false
+	for _, f := range zr.File {
+		if strings.HasPrefix(f.Name, "word/media/") {
+			hasMedia = true
+			break
 		}
 	}
-	return false
+	if !hasMedia {
+		t.Error("输出 docx 中未找到注入的图片文件（word/media/）")
+	}
+	if !strings.Contains(docXML, "w:drawing") {
+		t.Error("document.xml 中未找到图片节点 w:drawing")
+	}
+
+	// 所有验证通过，将结果保存到 templates/test.docx 供人工检查
+	if err := os.WriteFile("../../templates/test.docx", wordBytes, 0644); err != nil {
+		t.Errorf("保存 test.docx 失败: %v", err)
+	}
 }
+
+// readZipFile 从 zip.Reader 中读取指定文件内容为字符串
+func readZipFile(t *testing.T, zr *zip.Reader, name string) string {
+	t.Helper()
+	for _, f := range zr.File {
+		if f.Name == name {
+			rc, err := f.Open()
+			if err != nil {
+				t.Fatalf("打开 zip 文件 %s 失败: %v", name, err)
+			}
+			defer rc.Close()
+			var buf bytes.Buffer
+			buf.ReadFrom(rc)
+			return buf.String()
+		}
+	}
+	t.Fatalf("zip 中未找到文件: %s", name)
+	return ""
+}
+

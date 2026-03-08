@@ -81,6 +81,7 @@ func NewApp(
 			doc := protected.Group("/document")
 			{
 				doc.POST("/generate-pdf", documentHandler.GeneratePDF)
+				doc.POST("/generate-word", documentHandler.GenerateWord)
 			}
 		}
 	}

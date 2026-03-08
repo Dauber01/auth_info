@@ -11,7 +11,17 @@ import (
 	"text/template"
 
 	"github.com/go-pdf/fpdf"
+	godocx "github.com/lukasjarosch/go-docx"
 )
+
+// isImageValue 判断 data 值是否为图片（base64 格式）
+func isImageValue(v any) bool {
+	s, ok := v.(string)
+	if !ok {
+		return false
+	}
+	return strings.HasPrefix(s, "data:image/")
+}
 
 // DocumentUseCase 处理 PDF 文档生成，无需数据库依赖
 type DocumentUseCase struct {
@@ -233,4 +243,64 @@ func (uc *DocumentUseCase) drawImage(pdf *fpdf.Fpdf, sec *templateSection) error
 	pdf.Image(imgName, pdf.GetX(), pdf.GetY(), w, h, true, imgType, 0, "")
 	pdf.Ln(4)
 	return nil
+}
+
+// GenerateWord 根据 .docx 模板和数据生成 Word 文档，返回字节流。
+// 模板文件路径：templates/<templateName>.docx
+// 占位符格式：{key}（单花括号，在 Word 中直接编辑）
+// 若 data[key] 的值以 "data:image/" 开头，则视为图片并注入到文档中替换占位符。
+func (uc *DocumentUseCase) GenerateWord(templateName string, data map[string]any) ([]byte, error) {
+	tmplPath := fmt.Sprintf("%s/%s.docx", uc.templateDir, templateName)
+
+	docBytes, err := os.ReadFile(tmplPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("template not found: %s", templateName)
+		}
+		return nil, fmt.Errorf("failed to read template: %w", err)
+	}
+
+	// 分离文本数据和图片数据
+	textData := make(godocx.PlaceholderMap)
+	imageData := make(map[string]string) // key -> base64 data URI
+	for k, v := range data {
+		if isImageValue(v) {
+			imageData[k] = v.(string)
+		} else {
+			textData[k] = v
+		}
+	}
+
+	// 第一步：用 go-docx 完成文本替换（同时将图片占位符替换为唯一临时标记，
+	// 让 go-docx 帮我们合并被 Word XML 分割的 run，避免手动处理碎片）
+	const imgMarkerPrefix = "__IMGPLACEHOLDER_"
+	for k := range imageData {
+		textData[k] = imgMarkerPrefix + k + "__"
+	}
+
+	doc, err := godocx.OpenBytes(docBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open docx template: %w", err)
+	}
+	defer doc.Close()
+
+	if err := doc.ReplaceAll(textData); err != nil {
+		return nil, fmt.Errorf("failed to replace text placeholders: %w", err)
+	}
+
+	var buf bytes.Buffer
+	if err := doc.Write(&buf); err != nil {
+		return nil, fmt.Errorf("failed to write docx after text replace: %w", err)
+	}
+
+	// 第二步：若有图片，对 ZIP 字节流进行图片注入
+	if len(imageData) > 0 {
+		result, err := injectImagesToDocx(buf.Bytes(), imageData, imgMarkerPrefix)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	}
+
+	return buf.Bytes(), nil
 }
