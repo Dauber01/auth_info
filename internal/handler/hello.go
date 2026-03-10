@@ -5,16 +5,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"auth_info/internal/biz"
+	bizhello "auth_info/internal/biz/hello"
 )
 
 // HelloHandler HTTP 请求处理器
 type HelloHandler struct {
-	uc *biz.HelloUseCase
+	uc *bizhello.UseCase
 }
 
 // NewHelloHandler Wire Provider
-func NewHelloHandler(uc *biz.HelloUseCase) *HelloHandler {
+func NewHelloHandler(uc *bizhello.UseCase) *HelloHandler {
 	return &HelloHandler{uc: uc}
 }
 

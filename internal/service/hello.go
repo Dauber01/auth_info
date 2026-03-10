@@ -6,17 +6,17 @@ import (
 	"google.golang.org/grpc"
 
 	proto "auth_info/api/gen/api/proto"
-	"auth_info/internal/biz"
+	bizhello "auth_info/internal/biz/hello"
 )
 
 // HelloService 实现 gRPC HelloServiceServer 接口
 type HelloService struct {
 	proto.UnimplementedHelloServiceServer
-	uc *biz.HelloUseCase
+	uc *bizhello.UseCase
 }
 
 // NewHelloService Wire Provider
-func NewHelloService(uc *biz.HelloUseCase) *HelloService {
+func NewHelloService(uc *bizhello.UseCase) *HelloService {
 	return &HelloService{uc: uc}
 }
 

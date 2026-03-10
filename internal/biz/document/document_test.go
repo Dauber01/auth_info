@@ -1,4 +1,4 @@
-package biz
+package document
 
 import (
 	"archive/zip"
@@ -10,7 +10,7 @@ import (
 )
 
 func TestGeneratePDF_WithImage(t *testing.T) {
-	uc := NewDocumentUseCase()
+	uc := NewUseCase()
 
 	// 1x1 透明 PNG 图片
 	pngBytes := []byte{
@@ -67,7 +67,7 @@ func TestGenerateWord_WithTextAndImage(t *testing.T) {
 	signature := "data:image/png;base64," + base64.StdEncoding.EncodeToString(pngBytes)
 
 	// word_template_test.docx 已常驻于 templates/ 目录，直接使用
-	uc := NewDocumentUseCase()
+	uc := NewUseCase()
 	wordBytes, err := uc.GenerateWord("word_template_test", map[string]any{
 		"Name":      "张三",
 		"Signature": signature,
@@ -87,7 +87,7 @@ func TestGenerateWord_WithTextAndImage(t *testing.T) {
 	// 验证文本占位符已替换：document.xml 中不应再含有 {Name}，应含有 张三
 	zr, err := zip.NewReader(bytes.NewReader(wordBytes), int64(len(wordBytes)))
 	if err != nil {
-		t.Fatalf("��析输出 docx zip 失败: %v", err)
+		t.Fatalf("解析输出 docx zip 失败: %v", err)
 	}
 	docXML := readZipFile(t, zr, "word/document.xml")
 	if strings.Contains(docXML, "{Name}") {
@@ -113,7 +113,7 @@ func TestGenerateWord_WithTextAndImage(t *testing.T) {
 	}
 
 	// 所有验证通过，将结果保存到 templates/test.docx 供人工检查
-	if err := os.WriteFile("../../templates/test.docx", wordBytes, 0644); err != nil {
+	if err := os.WriteFile("../../../templates/test.docx", wordBytes, 0644); err != nil {
 		t.Errorf("保存 test.docx 失败: %v", err)
 	}
 }
@@ -136,4 +136,3 @@ func readZipFile(t *testing.T, zr *zip.Reader, name string) string {
 	t.Fatalf("zip 中未找到文件: %s", name)
 	return ""
 }
-

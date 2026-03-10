@@ -5,16 +5,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"auth_info/internal/biz"
+	bizauth "auth_info/internal/biz/auth"
 )
 
 // AuthHandler 登录/注册 HTTP 处理器
 type AuthHandler struct {
-	uc *biz.AuthUseCase
+	uc *bizauth.UseCase
 }
 
 // NewAuthHandler Wire Provider
-func NewAuthHandler(uc *biz.AuthUseCase) *AuthHandler {
+func NewAuthHandler(uc *bizauth.UseCase) *AuthHandler {
 	return &AuthHandler{uc: uc}
 }
 

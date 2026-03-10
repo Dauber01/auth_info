@@ -1,4 +1,4 @@
-package biz
+package auth
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ import (
 
 	"auth_info/internal/config"
 	"auth_info/internal/logger"
-	"auth_info/internal/model"
+	modelauth "auth_info/internal/model/auth"
 )
 
 // Claims JWT 自定义声明
@@ -22,20 +22,20 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// AuthUseCase 鉴权业务逻辑
-type AuthUseCase struct {
+// UseCase 鉴权业务逻辑
+type UseCase struct {
 	db  *gorm.DB
 	cfg *config.Config
 }
 
-// NewAuthUseCase Wire Provider
-func NewAuthUseCase(db *gorm.DB, cfg *config.Config) *AuthUseCase {
-	return &AuthUseCase{db: db, cfg: cfg}
+// NewUseCase Wire Provider
+func NewUseCase(db *gorm.DB, cfg *config.Config) *UseCase {
+	return &UseCase{db: db, cfg: cfg}
 }
 
 // Register 注册新用户（bcrypt 加密密码）
-func (uc *AuthUseCase) Register(username, password string) error {
-	var existing model.User
+func (uc *UseCase) Register(username, password string) error {
+	var existing modelauth.User
 	if err := uc.db.Where("username = ?", username).First(&existing).Error; err == nil {
 		return errors.New("username already exists")
 	}
@@ -45,7 +45,7 @@ func (uc *AuthUseCase) Register(username, password string) error {
 		return err
 	}
 
-	user := model.User{
+	user := modelauth.User{
 		Username: username,
 		Password: string(hash),
 		Role:     "user",
@@ -59,8 +59,8 @@ func (uc *AuthUseCase) Register(username, password string) error {
 }
 
 // Login 验证用户名密码，成功后返回 JWT Token
-func (uc *AuthUseCase) Login(username, password string) (string, error) {
-	var user model.User
+func (uc *UseCase) Login(username, password string) (string, error) {
+	var user modelauth.User
 	if err := uc.db.Where("username = ?", username).First(&user).Error; err != nil {
 		return "", errors.New("invalid credentials")
 	}
@@ -79,7 +79,7 @@ func (uc *AuthUseCase) Login(username, password string) (string, error) {
 }
 
 // ParseToken 解析并验证 JWT Token
-func (uc *AuthUseCase) ParseToken(tokenStr string) (*Claims, error) {
+func (uc *UseCase) ParseToken(tokenStr string) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -93,7 +93,7 @@ func (uc *AuthUseCase) ParseToken(tokenStr string) (*Claims, error) {
 	return claims, nil
 }
 
-func (uc *AuthUseCase) generateToken(user *model.User) (string, error) {
+func (uc *UseCase) generateToken(user *modelauth.User) (string, error) {
 	expire := time.Duration(uc.cfg.JWT.Expire) * time.Hour
 	claims := Claims{
 		UserID:   user.ID,

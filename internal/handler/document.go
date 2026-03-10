@@ -4,17 +4,17 @@ import (
 	"net/http"
 	"strings"
 
-	"auth_info/internal/biz"
-
 	"github.com/gin-gonic/gin"
+
+	bizdoc "auth_info/internal/biz/document"
 )
 
 // DocumentHandler 处理文档生成相关接口
 type DocumentHandler struct {
-	uc *biz.DocumentUseCase
+	uc *bizdoc.UseCase
 }
 
-func NewDocumentHandler(uc *biz.DocumentUseCase) *DocumentHandler {
+func NewDocumentHandler(uc *bizdoc.UseCase) *DocumentHandler {
 	return &DocumentHandler{uc: uc}
 }
 

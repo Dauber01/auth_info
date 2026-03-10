@@ -1,4 +1,4 @@
-package model
+package dict
 
 import "gorm.io/gorm"
 

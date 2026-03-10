@@ -1,4 +1,4 @@
-package biz
+package document
 
 import (
 	"archive/zip"
@@ -13,15 +13,12 @@ import (
 )
 
 // injectImagesToDocx 向已完成文本替换的 docx 字节流中注入图片。
-// 找到 document.xml 里的临时标记，将其所在 <w:r> 节点替换为 <w:drawing> 节点，
-// 同时向 ZIP 写入图片文件并追加 _rels 关系引用。
 func injectImagesToDocx(docxBytes []byte, imageData map[string]string, markerPrefix string) ([]byte, error) {
 	zr, err := zip.NewReader(bytes.NewReader(docxBytes), int64(len(docxBytes)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read docx zip: %w", err)
 	}
 
-	// 把所有 ZIP 条目读入内存，方便修改后整体重打包
 	files := make(map[string][]byte, len(zr.File))
 	for _, f := range zr.File {
 		rc, err := f.Open()
@@ -54,11 +51,10 @@ func injectImagesToDocx(docxBytes []byte, imageData map[string]string, markerPre
 		)
 		relsXML = strings.Replace(relsXML, "</Relationships>", relEntry+"</Relationships>", 1)
 
-		cx, cy := imageEMU(imgBytes, 1800000) // 默认宽 5cm
+		cx, cy := imageEMU(imgBytes, 1800000)
 		drawingXML := buildDrawingXML(rId, p.idx+1, cx, cy)
 
 		marker := markerPrefix + p.key + "__"
-		// 匹配包含 marker 的整个 <w:r> 节点（含可选的 <w:rPr>）
 		re := regexp.MustCompile(
 			`<w:r\b[^>]*>(?:<w:rPr>[\s\S]*?</w:rPr>)?<w:t[^>]*>` +
 				regexp.QuoteMeta(marker) +
@@ -80,7 +76,7 @@ func parseDataURI(dataURI string) ([]byte, string, error) {
 	if semicolon == -1 || comma == -1 || comma < semicolon {
 		return nil, "", fmt.Errorf("invalid data URI format")
 	}
-	mimeType := dataURI[5:semicolon] // 截掉 "data:"
+	mimeType := dataURI[5:semicolon]
 	ext := "png"
 	if strings.Contains(mimeType, "jpeg") || strings.Contains(mimeType, "jpg") {
 		ext = "jpg"
@@ -93,7 +89,6 @@ func parseDataURI(dataURI string) ([]byte, string, error) {
 }
 
 // imageEMU 解码图片获取实际宽高，按给定目标宽度（EMU）等比缩放返回 cx/cy。
-// 1 cm = 360000 EMU；解码失败时返回 defaultCx × defaultCx/2 作为兜底。
 func imageEMU(imgBytes []byte, defaultCx int64) (int64, int64) {
 	cfg, _, err := image.DecodeConfig(bytes.NewReader(imgBytes))
 	if err != nil || cfg.Width == 0 {
@@ -128,7 +123,7 @@ func buildDrawingXML(rId string, idx int, cx, cy int64) string {
 	)
 }
 
-// repackDocxZip 按原始 ZIP 条目顺序重新打包，新增文件（如 media 图片）追加在末尾
+// repackDocxZip 按原始 ZIP 条目顺序重新打包，新增文件追加在末尾
 func repackDocxZip(original *zip.Reader, files map[string][]byte) ([]byte, error) {
 	var buf bytes.Buffer
 	zw := zip.NewWriter(&buf)
@@ -145,7 +140,6 @@ func repackDocxZip(original *zip.Reader, files map[string][]byte) ([]byte, error
 		}
 	}
 
-	// 写入新增文件（原 ZIP 中不存在的，如新图片）
 	for name, content := range files {
 		if written[name] {
 			continue
@@ -165,8 +159,7 @@ func repackDocxZip(original *zip.Reader, files map[string][]byte) ([]byte, error
 	return buf.Bytes(), nil
 }
 
-// indexedPairs 将 map 转为有稳定顺序的 (index, key, value) 序列，
-// 保证每次运行图片编号一致（map 迭代顺序不确定）
+// indexedPairs 将 map 转为有稳定顺序的 (index, key, value) 序列
 func indexedPairs(m map[string]string) []struct {
 	idx int
 	key string

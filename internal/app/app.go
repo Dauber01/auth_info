@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	"auth_info/internal/biz"
+	bizauth "auth_info/internal/biz/auth"
 	"auth_info/internal/config"
 	"auth_info/internal/handler"
 	"auth_info/internal/logger"
@@ -29,7 +29,7 @@ type App struct {
 // NewApp Wire Provider
 func NewApp(
 	cfg *config.Config,
-	authUC *biz.AuthUseCase,
+	authUC *bizauth.UseCase,
 	enforcer *casbin.Enforcer,
 	helloHandler *handler.HelloHandler,
 	authHandler *handler.AuthHandler,
@@ -52,37 +52,16 @@ func NewApp(
 	api := engine.Group("/api/v1")
 	{
 		// 公开路由（无需鉴权）
-		auth := api.Group("/auth")
-		{
-			auth.POST("/register", authHandler.Register)
-			auth.POST("/login", authHandler.Login)
-		}
+		registerAuthRoutes(api, authHandler)
 
 		// 受保护路由（JWT + Casbin）
 		protected := api.Group("")
 		protected.Use(middleware.JWTAuth(authUC))
 		protected.Use(middleware.CasbinAuth(enforcer))
 		{
-			protected.GET("/hello", helloHandler.Hello)
-
-			dict := protected.Group("/dict")
-			{
-				dict.GET("/types", dictHandler.ListDictTypes)
-				dict.POST("/types", dictHandler.CreateDictType)
-				dict.PUT("/types/:id", dictHandler.UpdateDictType)
-				dict.DELETE("/types/:id", dictHandler.DeleteDictType)
-
-				dict.GET("/items", dictHandler.ListDictItems)
-				dict.POST("/items", dictHandler.CreateDictItem)
-				dict.PUT("/items/:id", dictHandler.UpdateDictItem)
-				dict.DELETE("/items/:id", dictHandler.DeleteDictItem)
-			}
-
-			doc := protected.Group("/document")
-			{
-				doc.POST("/generate-pdf", documentHandler.GeneratePDF)
-				doc.POST("/generate-word", documentHandler.GenerateWord)
-			}
+			registerHelloRoutes(protected, helloHandler)
+			registerDictRoutes(protected, dictHandler)
+			registerDocumentRoutes(protected, documentHandler)
 		}
 	}
 

@@ -7,7 +7,10 @@
 package app
 
 import (
-	"auth_info/internal/biz"
+	bizauth "auth_info/internal/biz/auth"
+	bizdict "auth_info/internal/biz/dict"
+	bizdoc "auth_info/internal/biz/document"
+	bizhello "auth_info/internal/biz/hello"
 	"auth_info/internal/config"
 	"auth_info/internal/data"
 	"auth_info/internal/handler"
@@ -25,10 +28,10 @@ func InitializeApp(cfg *config.Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	authUseCase := biz.NewAuthUseCase(db, cfg)
-	helloUseCase := biz.NewHelloUseCase()
-	dictUseCase := biz.NewDictUseCase(db)
-	documentUseCase := biz.NewDocumentUseCase()
+	authUseCase := bizauth.NewUseCase(db, cfg)
+	helloUseCase := bizhello.NewUseCase()
+	dictUseCase := bizdict.NewUseCase(db)
+	documentUseCase := bizdoc.NewUseCase()
 	helloHandler := handler.NewHelloHandler(helloUseCase)
 	authHandler := handler.NewAuthHandler(authUseCase)
 	dictHandler := handler.NewDictHandler(dictUseCase)

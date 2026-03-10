@@ -7,13 +7,13 @@ import (
 	"github.com/casbin/casbin/v3"
 	"github.com/gin-gonic/gin"
 
-	"auth_info/internal/biz"
+	bizauth "auth_info/internal/biz/auth"
 )
 
 const claimsKey = "claims"
 
 // JWTAuth JWT 鉴权中间件，验证 Bearer Token 并将 Claims 写入上下文
-func JWTAuth(uc *biz.AuthUseCase) gin.HandlerFunc {
+func JWTAuth(uc *bizauth.UseCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
@@ -51,7 +51,7 @@ func CasbinAuth(enforcer *casbin.Enforcer) gin.HandlerFunc {
 			return
 		}
 
-		authClaims, ok := claims.(*biz.Claims)
+		authClaims, ok := claims.(*bizauth.Claims)
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"code":    http.StatusUnauthorized,
@@ -74,8 +74,8 @@ func CasbinAuth(enforcer *casbin.Enforcer) gin.HandlerFunc {
 }
 
 // GetClaims 从 gin.Context 中取出 JWT Claims（供 handler 使用）
-func GetClaims(c *gin.Context) *biz.Claims {
+func GetClaims(c *gin.Context) *bizauth.Claims {
 	v, _ := c.Get(claimsKey)
-	claims, _ := v.(*biz.Claims)
+	claims, _ := v.(*bizauth.Claims)
 	return claims
 }

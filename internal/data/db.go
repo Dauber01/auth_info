@@ -12,7 +12,8 @@ import (
 
 	"auth_info/internal/config"
 	"auth_info/internal/logger"
-	"auth_info/internal/model"
+	modelauth "auth_info/internal/model/auth"
+	modeldict "auth_info/internal/model/dict"
 )
 
 // NewDB Wire Provider：初始化 MySQL 连接，自动迁移表结构
@@ -30,7 +31,11 @@ func NewDB(cfg *config.Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("connect mysql: %w", err)
 	}
 
-	if err = db.AutoMigrate(&model.User{}, &model.DictType{}, &model.DictItem{}); err != nil {
+	if err = db.AutoMigrate(
+		&modelauth.User{},
+		&modeldict.DictType{},
+		&modeldict.DictItem{},
+	); err != nil {
 		return nil, fmt.Errorf("auto migrate: %w", err)
 	}
 

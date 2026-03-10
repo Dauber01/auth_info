@@ -1,4 +1,4 @@
-package biz
+package document
 
 import (
 	"bytes"
@@ -23,14 +23,14 @@ func isImageValue(v any) bool {
 	return strings.HasPrefix(s, "data:image/")
 }
 
-// DocumentUseCase 处理 PDF 文档生成，无需数据库依赖
-type DocumentUseCase struct {
+// UseCase 处理 PDF 文档生成，无需数据库依赖
+type UseCase struct {
 	templateDir string
 	fontPath    string
 }
 
-func NewDocumentUseCase() *DocumentUseCase {
-	return &DocumentUseCase{
+func NewUseCase() *UseCase {
+	return &UseCase{
 		templateDir: "D:\\GoProject\\auth_info\\templates",
 		fontPath:    "D:\\GoProject\\auth_info\\assets\\fonts\\NotoSansSC-Regular.ttf",
 	}
@@ -56,7 +56,7 @@ type templateSection struct {
 }
 
 // GeneratePDF 根据模板名称和数据生成 PDF，返回字节流
-func (uc *DocumentUseCase) GeneratePDF(templateName string, data map[string]any) ([]byte, error) {
+func (uc *UseCase) GeneratePDF(templateName string, data map[string]any) ([]byte, error) {
 	// 1. 读取模板文件
 	tmplPath := fmt.Sprintf("%s/%s.json", uc.templateDir, templateName)
 	tmplRaw, err := os.ReadFile(tmplPath)
@@ -85,7 +85,6 @@ func (uc *DocumentUseCase) GeneratePDF(templateName string, data map[string]any)
 
 // renderTemplate 使用 text/template 将数据填充到模板字符串中
 func renderTemplate(tmplStr string, data map[string]any) (string, error) {
-	// 将 map 转为 template 可访问的格式
 	tmpl, err := template.New("doc").Option("missingkey=zero").Parse(tmplStr)
 	if err != nil {
 		return "", err
@@ -98,7 +97,7 @@ func renderTemplate(tmplStr string, data map[string]any) (string, error) {
 }
 
 // buildPDF 使用 fpdf 将解析后的模板绘制成 PDF
-func (uc *DocumentUseCase) buildPDF(doc *documentTemplate) ([]byte, error) {
+func (uc *UseCase) buildPDF(doc *documentTemplate) ([]byte, error) {
 	pdf := fpdf.New("P", "mm", "A4", "")
 
 	// 加载中文字体（如果存在）
@@ -149,7 +148,7 @@ func (uc *DocumentUseCase) buildPDF(doc *documentTemplate) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (uc *DocumentUseCase) drawParagraph(pdf *fpdf.Fpdf, sec *templateSection, fontFamily string, contentWidth float64) error {
+func (uc *UseCase) drawParagraph(pdf *fpdf.Fpdf, sec *templateSection, fontFamily string, contentWidth float64) error {
 	fontSize := sec.FontSize
 	if fontSize <= 0 {
 		fontSize = 12
@@ -159,13 +158,13 @@ func (uc *DocumentUseCase) drawParagraph(pdf *fpdf.Fpdf, sec *templateSection, f
 		style = "B"
 	}
 	pdf.SetFont(fontFamily, style, fontSize)
-	lineHeight := fontSize * 0.45 // mm，约为字号的换算
+	lineHeight := fontSize * 0.45
 	pdf.MultiCell(contentWidth, lineHeight, sec.Content, "", "L", false)
 	pdf.Ln(2)
 	return nil
 }
 
-func (uc *DocumentUseCase) drawTable(pdf *fpdf.Fpdf, sec *templateSection, fontFamily string, contentWidth float64) error {
+func (uc *UseCase) drawTable(pdf *fpdf.Fpdf, sec *templateSection, fontFamily string, contentWidth float64) error {
 	if len(sec.Headers) == 0 {
 		return nil
 	}
@@ -186,7 +185,6 @@ func (uc *DocumentUseCase) drawTable(pdf *fpdf.Fpdf, sec *templateSection, fontF
 	pdf.SetFont(fontFamily, "", 11)
 	pdf.SetFillColor(255, 255, 255)
 	for i, row := range sec.Rows {
-		// 奇偶行交替背景
 		if i%2 == 0 {
 			pdf.SetFillColor(248, 248, 248)
 		} else {
@@ -204,17 +202,15 @@ func (uc *DocumentUseCase) drawTable(pdf *fpdf.Fpdf, sec *templateSection, fontF
 	return nil
 }
 
-func (uc *DocumentUseCase) drawImage(pdf *fpdf.Fpdf, sec *templateSection) error {
+func (uc *UseCase) drawImage(pdf *fpdf.Fpdf, sec *templateSection) error {
 	if sec.Data == "" {
 		return nil
 	}
 
-	// 解析 base64 数据，支持 "data:image/png;base64,xxx" 和纯 base64
 	raw := sec.Data
 	imgType := "PNG"
 	if idx := strings.Index(raw, ";base64,"); idx != -1 {
-		// 提取 MIME 类型
-		mimeStr := raw[5:idx] // "image/png"
+		mimeStr := raw[5:idx]
 		switch {
 		case strings.Contains(mimeStr, "jpeg") || strings.Contains(mimeStr, "jpg"):
 			imgType = "JPG"
@@ -235,7 +231,7 @@ func (uc *DocumentUseCase) drawImage(pdf *fpdf.Fpdf, sec *templateSection) error
 		w = 60
 	}
 	if h <= 0 {
-		h = 0 // 0 表示等比例缩放
+		h = 0
 	}
 
 	imgName := fmt.Sprintf("img_%p", sec)
@@ -246,10 +242,7 @@ func (uc *DocumentUseCase) drawImage(pdf *fpdf.Fpdf, sec *templateSection) error
 }
 
 // GenerateWord 根据 .docx 模板和数据生成 Word 文档，返回字节流。
-// 模板文件路径：templates/<templateName>.docx
-// 占位符格式：{key}（单花括号，在 Word 中直接编辑）
-// 若 data[key] 的值以 "data:image/" 开头，则视为图片并注入到文档中替换占位符。
-func (uc *DocumentUseCase) GenerateWord(templateName string, data map[string]any) ([]byte, error) {
+func (uc *UseCase) GenerateWord(templateName string, data map[string]any) ([]byte, error) {
 	tmplPath := fmt.Sprintf("%s/%s.docx", uc.templateDir, templateName)
 
 	docBytes, err := os.ReadFile(tmplPath)
@@ -262,7 +255,7 @@ func (uc *DocumentUseCase) GenerateWord(templateName string, data map[string]any
 
 	// 分离文本数据和图片数据
 	textData := make(godocx.PlaceholderMap)
-	imageData := make(map[string]string) // key -> base64 data URI
+	imageData := make(map[string]string)
 	for k, v := range data {
 		if isImageValue(v) {
 			imageData[k] = v.(string)
@@ -271,8 +264,6 @@ func (uc *DocumentUseCase) GenerateWord(templateName string, data map[string]any
 		}
 	}
 
-	// 第一步：用 go-docx 完成文本替换（同时将图片占位符替换为唯一临时标记，
-	// 让 go-docx 帮我们合并被 Word XML 分割的 run，避免手动处理碎片）
 	const imgMarkerPrefix = "__IMGPLACEHOLDER_"
 	for k := range imageData {
 		textData[k] = imgMarkerPrefix + k + "__"
@@ -293,7 +284,6 @@ func (uc *DocumentUseCase) GenerateWord(templateName string, data map[string]any
 		return nil, fmt.Errorf("failed to write docx after text replace: %w", err)
 	}
 
-	// 第二步：若有图片，对 ZIP 字节流进行图片注入
 	if len(imageData) > 0 {
 		result, err := injectImagesToDocx(buf.Bytes(), imageData, imgMarkerPrefix)
 		if err != nil {

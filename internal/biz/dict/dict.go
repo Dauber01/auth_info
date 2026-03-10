@@ -1,4 +1,4 @@
-package biz
+package dict
 
 import (
 	"errors"
@@ -7,24 +7,24 @@ import (
 	"gorm.io/gorm"
 
 	"auth_info/internal/logger"
-	"auth_info/internal/model"
+	modeldict "auth_info/internal/model/dict"
 )
 
-// DictUseCase 字典配置业务逻辑
-type DictUseCase struct {
+// UseCase 字典配置业务逻辑
+type UseCase struct {
 	db *gorm.DB
 }
 
-// NewDictUseCase Wire Provider
-func NewDictUseCase(db *gorm.DB) *DictUseCase {
-	return &DictUseCase{db: db}
+// NewUseCase Wire Provider
+func NewUseCase(db *gorm.DB) *UseCase {
+	return &UseCase{db: db}
 }
 
 // ─── DictType ─────────────────────────────────────────────────────────────────
 
 // ListDictTypes 获取所有字典类型，按 sort 正序排列
-func (uc *DictUseCase) ListDictTypes() ([]model.DictType, error) {
-	var types []model.DictType
+func (uc *UseCase) ListDictTypes() ([]modeldict.DictType, error) {
+	var types []modeldict.DictType
 	if err := uc.db.Order("sort asc, id asc").Find(&types).Error; err != nil {
 		return nil, err
 	}
@@ -32,13 +32,13 @@ func (uc *DictUseCase) ListDictTypes() ([]model.DictType, error) {
 }
 
 // CreateDictType 创建字典类型
-func (uc *DictUseCase) CreateDictType(code, name, description string, sort int) error {
-	var existing model.DictType
+func (uc *UseCase) CreateDictType(code, name, description string, sort int) error {
+	var existing modeldict.DictType
 	if err := uc.db.Where("code = ?", code).First(&existing).Error; err == nil {
 		return errors.New("dict type code already exists")
 	}
 
-	dictType := model.DictType{
+	dictType := modeldict.DictType{
 		Code:        code,
 		Name:        name,
 		Description: description,
@@ -53,8 +53,8 @@ func (uc *DictUseCase) CreateDictType(code, name, description string, sort int) 
 }
 
 // UpdateDictType 更新字典类型（code 不可修改）
-func (uc *DictUseCase) UpdateDictType(id uint, name, description string, sort int) error {
-	result := uc.db.Model(&model.DictType{}).Where("id = ?", id).Updates(map[string]any{
+func (uc *UseCase) UpdateDictType(id uint, name, description string, sort int) error {
+	result := uc.db.Model(&modeldict.DictType{}).Where("id = ?", id).Updates(map[string]any{
 		"name":        name,
 		"description": description,
 		"sort":        sort,
@@ -71,8 +71,8 @@ func (uc *DictUseCase) UpdateDictType(id uint, name, description string, sort in
 }
 
 // DeleteDictType 软删除字典类型
-func (uc *DictUseCase) DeleteDictType(id uint) error {
-	result := uc.db.Delete(&model.DictType{}, id)
+func (uc *UseCase) DeleteDictType(id uint) error {
+	result := uc.db.Delete(&modeldict.DictType{}, id)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -87,8 +87,8 @@ func (uc *DictUseCase) DeleteDictType(id uint) error {
 // ─── DictItem ─────────────────────────────────────────────────────────────────
 
 // ListDictItems 根据类型编码获取字典数据，按 sort 正序排列
-func (uc *DictUseCase) ListDictItems(typeCode string) ([]model.DictItem, error) {
-	var items []model.DictItem
+func (uc *UseCase) ListDictItems(typeCode string) ([]modeldict.DictItem, error) {
+	var items []modeldict.DictItem
 	if err := uc.db.Where("type_code = ?", typeCode).Order("sort asc, id asc").Find(&items).Error; err != nil {
 		return nil, err
 	}
@@ -96,8 +96,8 @@ func (uc *DictUseCase) ListDictItems(typeCode string) ([]model.DictItem, error) 
 }
 
 // CreateDictItem 创建字典数据
-func (uc *DictUseCase) CreateDictItem(typeCode, itemKey, itemValue, description string, sort int) error {
-	item := model.DictItem{
+func (uc *UseCase) CreateDictItem(typeCode, itemKey, itemValue, description string, sort int) error {
+	item := modeldict.DictItem{
 		TypeCode:    typeCode,
 		ItemKey:     itemKey,
 		ItemValue:   itemValue,
@@ -117,8 +117,8 @@ func (uc *DictUseCase) CreateDictItem(typeCode, itemKey, itemValue, description 
 }
 
 // UpdateDictItem 更新字典数据
-func (uc *DictUseCase) UpdateDictItem(id uint, itemKey, itemValue, description string, sort, status int) error {
-	result := uc.db.Model(&model.DictItem{}).Where("id = ?", id).Updates(map[string]any{
+func (uc *UseCase) UpdateDictItem(id uint, itemKey, itemValue, description string, sort, status int) error {
+	result := uc.db.Model(&modeldict.DictItem{}).Where("id = ?", id).Updates(map[string]any{
 		"item_key":    itemKey,
 		"item_value":  itemValue,
 		"description": description,
@@ -137,8 +137,8 @@ func (uc *DictUseCase) UpdateDictItem(id uint, itemKey, itemValue, description s
 }
 
 // DeleteDictItem 软删除字典数据
-func (uc *DictUseCase) DeleteDictItem(id uint) error {
-	result := uc.db.Delete(&model.DictItem{}, id)
+func (uc *UseCase) DeleteDictItem(id uint) error {
+	result := uc.db.Delete(&modeldict.DictItem{}, id)
 	if result.Error != nil {
 		return result.Error
 	}

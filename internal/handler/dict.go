@@ -6,16 +6,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"auth_info/internal/biz"
+	bizdict "auth_info/internal/biz/dict"
 )
 
 // DictHandler 字典配置 HTTP 处理器
 type DictHandler struct {
-	uc *biz.DictUseCase
+	uc *bizdict.UseCase
 }
 
 // NewDictHandler Wire Provider
-func NewDictHandler(uc *biz.DictUseCase) *DictHandler {
+func NewDictHandler(uc *bizdict.UseCase) *DictHandler {
 	return &DictHandler{uc: uc}
 }
 

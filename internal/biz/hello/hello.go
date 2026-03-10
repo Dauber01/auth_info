@@ -1,4 +1,4 @@
-package biz
+package hello
 
 import (
 	"go.uber.org/zap"
@@ -6,16 +6,16 @@ import (
 	"auth_info/internal/logger"
 )
 
-// HelloUseCase hello 业务逻辑
-type HelloUseCase struct{}
+// UseCase hello 业务逻辑
+type UseCase struct{}
 
-// NewHelloUseCase Wire Provider
-func NewHelloUseCase() *HelloUseCase {
-	return &HelloUseCase{}
+// NewUseCase Wire Provider
+func NewUseCase() *UseCase {
+	return &UseCase{}
 }
 
 // SayHello 处理 hello world 核心业务，name 为空时默认 "World"
-func (uc *HelloUseCase) SayHello(name string) string {
+func (uc *UseCase) SayHello(name string) string {
 	if name == "" {
 		name = "World"
 	}
