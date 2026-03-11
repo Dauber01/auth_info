@@ -17,22 +17,19 @@ import (
 
 func InitializeApp(cfg *config.Config) (*App, error) {
 	wire.Build(
-		// data 层
 		data.NewDB,
 		data.NewEnforcer,
-		// biz 层
+		data.NewUserRepository,
+		data.NewDictRepository,
 		bizhello.NewUseCase,
 		bizauth.NewUseCase,
 		bizdict.NewUseCase,
 		bizdoc.NewUseCase,
-		// handler 层
 		handler.NewHelloHandler,
 		handler.NewAuthHandler,
 		handler.NewDictHandler,
 		handler.NewDocumentHandler,
-		// service 层（gRPC）
 		service.NewHelloService,
-		// app 装配
 		NewApp,
 	)
 	return nil, nil

@@ -7,11 +7,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 
 	"auth_info/internal/config"
+	"auth_info/internal/data"
 	"auth_info/internal/logger"
-	modelauth "auth_info/internal/model/auth"
 )
 
 // Claims JWT 自定义声明
@@ -24,19 +23,22 @@ type Claims struct {
 
 // UseCase 鉴权业务逻辑
 type UseCase struct {
-	db  *gorm.DB
-	cfg *config.Config
+	users data.UserRepository
+	cfg   *config.Config
 }
 
 // NewUseCase Wire Provider
-func NewUseCase(db *gorm.DB, cfg *config.Config) *UseCase {
-	return &UseCase{db: db, cfg: cfg}
+func NewUseCase(users data.UserRepository, cfg *config.Config) *UseCase {
+	return &UseCase{users: users, cfg: cfg}
 }
 
 // Register 注册新用户（bcrypt 加密密码）
 func (uc *UseCase) Register(username, password string) error {
-	var existing modelauth.User
-	if err := uc.db.Where("username = ?", username).First(&existing).Error; err == nil {
+	existing, err := uc.users.GetByUsername(username)
+	if err != nil {
+		return err
+	}
+	if existing != nil {
 		return errors.New("username already exists")
 	}
 
@@ -45,12 +47,12 @@ func (uc *UseCase) Register(username, password string) error {
 		return err
 	}
 
-	user := modelauth.User{
+	user := data.User{
 		Username: username,
 		Password: string(hash),
 		Role:     "user",
 	}
-	if err = uc.db.Create(&user).Error; err != nil {
+	if err = uc.users.Create(&user); err != nil {
 		return err
 	}
 
@@ -60,8 +62,8 @@ func (uc *UseCase) Register(username, password string) error {
 
 // Login 验证用户名密码，成功后返回 JWT Token
 func (uc *UseCase) Login(username, password string) (string, error) {
-	var user modelauth.User
-	if err := uc.db.Where("username = ?", username).First(&user).Error; err != nil {
+	user, err := uc.users.GetByUsername(username)
+	if err != nil || user == nil {
 		return "", errors.New("invalid credentials")
 	}
 
@@ -69,7 +71,7 @@ func (uc *UseCase) Login(username, password string) (string, error) {
 		return "", errors.New("invalid credentials")
 	}
 
-	token, err := uc.generateToken(&user)
+	token, err := uc.generateToken(user)
 	if err != nil {
 		return "", err
 	}
@@ -93,7 +95,7 @@ func (uc *UseCase) ParseToken(tokenStr string) (*Claims, error) {
 	return claims, nil
 }
 
-func (uc *UseCase) generateToken(user *modelauth.User) (string, error) {
+func (uc *UseCase) generateToken(user *data.User) (string, error) {
 	expire := time.Duration(uc.cfg.JWT.Expire) * time.Hour
 	claims := Claims{
 		UserID:   user.ID,

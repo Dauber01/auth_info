@@ -1,4 +1,4 @@
-.PHONY: help proto wire build run clean install-tools
+﻿.PHONY: help proto wire build run clean install-tools
 
 # 变量定义
 PROJECT_NAME := auth_info
@@ -33,6 +33,7 @@ proto: install-tools
 	@echo "$(BLUE)Generating proto code...$(NC)"
 	@mkdir -p $(GEN_DIR)
 	@protoc \
+		--proto_path=. \
 		--go_out=$(GEN_DIR) \
 		--go_opt=paths=source_relative \
 		--go-grpc_out=$(GEN_DIR) \

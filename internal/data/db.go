@@ -12,11 +12,8 @@ import (
 
 	"auth_info/internal/config"
 	"auth_info/internal/logger"
-	modelauth "auth_info/internal/model/auth"
-	modeldict "auth_info/internal/model/dict"
 )
 
-// NewDB Wire Provider：初始化 MySQL 连接，自动迁移表结构
 func NewDB(cfg *config.Config) (*gorm.DB, error) {
 	c := cfg.MySQL
 	dsn := fmt.Sprintf(
@@ -31,11 +28,7 @@ func NewDB(cfg *config.Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("connect mysql: %w", err)
 	}
 
-	if err = db.AutoMigrate(
-		&modelauth.User{},
-		&modeldict.DictType{},
-		&modeldict.DictItem{},
-	); err != nil {
+	if err = db.AutoMigrate(&User{}, &DictType{}, &DictItem{}); err != nil {
 		return nil, fmt.Errorf("auto migrate: %w", err)
 	}
 
@@ -43,7 +36,6 @@ func NewDB(cfg *config.Config) (*gorm.DB, error) {
 	return db, nil
 }
 
-// NewEnforcer Wire Provider：初始化 Casbin + gorm-adapter，并写入默认策略
 func NewEnforcer(db *gorm.DB, cfg *config.Config) (*casbin.Enforcer, error) {
 	adapter, err := gormadapter.NewAdapterByDB(db)
 	if err != nil {
@@ -65,9 +57,7 @@ func NewEnforcer(db *gorm.DB, cfg *config.Config) (*casbin.Enforcer, error) {
 	return enforcer, nil
 }
 
-// seedDefaultPolicies 写入默认 RBAC 策略（幂等）
 func seedDefaultPolicies(e *casbin.Enforcer) {
-	// admin 角色拥有所有权限
 	policies := [][]string{
 		{"admin", "/api/v1/*", "*"},
 		{"user", "/api/v1/hello", "GET"},

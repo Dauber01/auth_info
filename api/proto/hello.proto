@@ -1,22 +1,23 @@
-syntax = "proto3";
+﻿syntax = "proto3";
 
 package hello;
 
-option go_package = "auth_info/api/gen/hello;hello";
+option go_package = "auth_info/api/gen/api/proto;apipb";
 
-// HelloRequest 请求消息
 message HelloRequest {
   string name = 1;
 }
 
-// HelloReply 响应消息
-message HelloReply {
+message HelloData {
   string message = 1;
-  int32 code = 2;
 }
 
-// HelloService gRPC 服务定义
+message HelloReply {
+  int32 code = 1;
+  string message = 2;
+  HelloData data = 3;
+}
+
 service HelloService {
-  // SayHello 方法
   rpc SayHello(HelloRequest) returns (HelloReply);
 }

@@ -1,0 +1,10 @@
+﻿syntax = "proto3";
+
+package api;
+
+option go_package = "auth_info/api/gen/api/proto;apipb";
+
+message OperationReply {
+  int32 code = 1;
+  string message = 2;
+}

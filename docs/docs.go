@@ -27,26 +27,7 @@ const docTemplate = `{
                     "Auth"
                 ],
                 "summary": "登录",
-                "parameters": [
-                    {
-                        "description": "登录信息",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.loginRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
         "/auth/register": {
@@ -61,26 +42,7 @@ const docTemplate = `{
                     "Auth"
                 ],
                 "summary": "注册",
-                "parameters": [
-                    {
-                        "description": "注册信息",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.registerRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
         "/dict/items": {
@@ -97,24 +59,7 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "根据类型编码获取字典数据列表",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "字典类型编码",
-                        "name": "type_code",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
+                "responses": {}
             },
             "post": {
                 "security": [
@@ -132,26 +77,7 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "创建字典数据",
-                "parameters": [
-                    {
-                        "description": "字典数据信息",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.createDictItemRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
         "/dict/items/{id}": {
@@ -171,33 +97,7 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "更新字典数据",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "字典数据 ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "更新信息",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.updateDictItemRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
+                "responses": {}
             },
             "delete": {
                 "security": [
@@ -212,24 +112,7 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "删除字典数据",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "字典数据 ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
         "/dict/types": {
@@ -246,15 +129,7 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "获取字典类型列表",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
+                "responses": {}
             },
             "post": {
                 "security": [
@@ -272,26 +147,7 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "创建字典类型",
-                "parameters": [
-                    {
-                        "description": "字典类型信息",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.createDictTypeRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
         "/dict/types/{id}": {
@@ -311,33 +167,7 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "更新字典类型",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "字典类型 ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "更新信息",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.updateDictTypeRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
+                "responses": {}
             },
             "delete": {
                 "security": [
@@ -352,24 +182,47 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "删除字典类型",
-                "parameters": [
+                "responses": {}
+            }
+        },
+        "/document/generate-pdf": {
+            "post": {
+                "security": [
                     {
-                        "type": "integer",
-                        "description": "字典类型 ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
+                        "BearerAuth": []
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/pdf"
+                ],
+                "tags": [
+                    "Document"
+                ],
+                "summary": "生成 PDF 文档",
+                "responses": {}
+            }
+        },
+        "/document/generate-word": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
                     }
-                }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                ],
+                "tags": [
+                    "Document"
+                ],
+                "summary": "生成 Word 文档",
+                "responses": {}
             }
         },
         "/hello": {
@@ -402,8 +255,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/apipb.HelloReply"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
                         }
                     }
                 }
@@ -411,138 +269,36 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.createDictItemRequest": {
+        "apipb.HelloData": {
             "type": "object",
-            "required": [
-                "item_key",
-                "item_value",
-                "type_code"
-            ],
             "properties": {
-                "description": {
-                    "type": "string",
-                    "maxLength": 256
-                },
-                "item_key": {
-                    "type": "string",
-                    "maxLength": 64
-                },
-                "item_value": {
-                    "type": "string",
-                    "maxLength": 256
-                },
-                "sort": {
-                    "type": "integer"
-                },
-                "type_code": {
-                    "type": "string",
-                    "maxLength": 64
+                "message": {
+                    "type": "string"
                 }
             }
         },
-        "handler.createDictTypeRequest": {
+        "apipb.HelloReply": {
             "type": "object",
-            "required": [
-                "code",
-                "name"
-            ],
             "properties": {
                 "code": {
-                    "type": "string",
-                    "maxLength": 64
-                },
-                "description": {
-                    "type": "string",
-                    "maxLength": 256
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 128
-                },
-                "sort": {
                     "type": "integer"
-                }
-            }
-        },
-        "handler.loginRequest": {
-            "type": "object",
-            "required": [
-                "password",
-                "username"
-            ],
-            "properties": {
-                "password": {
-                    "type": "string"
                 },
-                "username": {
+                "data": {
+                    "$ref": "#/definitions/apipb.HelloData"
+                },
+                "message": {
                     "type": "string"
                 }
             }
         },
-        "handler.registerRequest": {
+        "apipb.OperationReply": {
             "type": "object",
-            "required": [
-                "password",
-                "username"
-            ],
             "properties": {
-                "password": {
-                    "type": "string",
-                    "maxLength": 64,
-                    "minLength": 6
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 3
-                }
-            }
-        },
-        "handler.updateDictItemRequest": {
-            "type": "object",
-            "required": [
-                "item_key",
-                "item_value"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "maxLength": 256
-                },
-                "item_key": {
-                    "type": "string",
-                    "maxLength": 64
-                },
-                "item_value": {
-                    "type": "string",
-                    "maxLength": 256
-                },
-                "sort": {
+                "code": {
                     "type": "integer"
                 },
-                "status": {
-                    "type": "integer",
-                    "maximum": 1,
-                    "minimum": 0
-                }
-            }
-        },
-        "handler.updateDictTypeRequest": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "maxLength": 256
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 128
-                },
-                "sort": {
-                    "type": "integer"
+                "message": {
+                    "type": "string"
                 }
             }
         }

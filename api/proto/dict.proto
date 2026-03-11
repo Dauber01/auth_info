@@ -1,0 +1,80 @@
+﻿syntax = "proto3";
+
+package api;
+
+import "api/proto/validate.proto";
+
+option go_package = "auth_info/api/gen/api/proto;apipb";
+
+message DictType {
+  uint64 id = 1;
+  string code = 2;
+  string name = 3;
+  string description = 4;
+  int32 sort = 5;
+}
+
+message DictItem {
+  uint64 id = 1;
+  string type_code = 2;
+  string item_key = 3;
+  string item_value = 4;
+  string description = 5;
+  int32 sort = 6;
+  int32 status = 7;
+}
+
+message CreateDictTypeRequest {
+  string code = 1 [(api.validate.rules) = {required: true, max_len: 64}];
+  string name = 2 [(api.validate.rules) = {required: true, max_len: 128}];
+  string description = 3 [(api.validate.rules) = {max_len: 256}];
+  int32 sort = 4;
+}
+
+message UpdateDictTypeRequest {
+  uint64 id = 1 [(api.validate.rules) = {gte: 1}];
+  string name = 2 [(api.validate.rules) = {required: true, max_len: 128}];
+  string description = 3 [(api.validate.rules) = {max_len: 256}];
+  int32 sort = 4;
+}
+
+message DeleteDictTypeRequest {
+  uint64 id = 1 [(api.validate.rules) = {gte: 1}];
+}
+
+message ListDictTypesReply {
+  int32 code = 1;
+  string message = 2;
+  repeated DictType data = 3;
+}
+
+message CreateDictItemRequest {
+  string type_code = 1 [(api.validate.rules) = {required: true, max_len: 64}];
+  string item_key = 2 [(api.validate.rules) = {required: true, max_len: 64}];
+  string item_value = 3 [(api.validate.rules) = {required: true, max_len: 256}];
+  string description = 4 [(api.validate.rules) = {max_len: 256}];
+  int32 sort = 5;
+}
+
+message UpdateDictItemRequest {
+  uint64 id = 1 [(api.validate.rules) = {gte: 1}];
+  string item_key = 2 [(api.validate.rules) = {required: true, max_len: 64}];
+  string item_value = 3 [(api.validate.rules) = {required: true, max_len: 256}];
+  string description = 4 [(api.validate.rules) = {max_len: 256}];
+  int32 sort = 5;
+  int32 status = 6 [(api.validate.rules) = {gte: 0, lte: 1}];
+}
+
+message DeleteDictItemRequest {
+  uint64 id = 1 [(api.validate.rules) = {gte: 1}];
+}
+
+message ListDictItemsRequest {
+  string type_code = 1 [(api.validate.rules) = {required: true, max_len: 64}];
+}
+
+message ListDictItemsReply {
+  int32 code = 1;
+  string message = 2;
+  repeated DictItem data = 3;
+}

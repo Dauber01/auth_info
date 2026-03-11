@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	apipb "auth_info/api/gen/api/proto"
 	bizauth "auth_info/internal/biz/auth"
 )
 
@@ -18,37 +19,29 @@ func NewAuthHandler(uc *bizauth.UseCase) *AuthHandler {
 	return &AuthHandler{uc: uc}
 }
 
-type registerRequest struct {
-	Username string `json:"username" binding:"required,min=3,max=32"`
-	Password string `json:"password" binding:"required,min=6,max=64"`
-}
-
-type loginRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
 // Register
 // @Summary 注册
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param body body registerRequest true "注册信息"
-// @Success 200 {object} map[string]interface{}
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
-	var req registerRequest
+	var req apipb.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": err.Error()})
+		badRequest(c, err)
+		return
+	}
+	if err := validateRegisterRequest(&req); err != nil {
+		badRequest(c, err)
 		return
 	}
 
-	if err := h.uc.Register(req.Username, req.Password); err != nil {
-		c.JSON(http.StatusConflict, gin.H{"code": http.StatusConflict, "message": err.Error()})
+	if err := h.uc.Register(req.GetUsername(), req.GetPassword()); err != nil {
+		writeOperationReply(c, http.StatusConflict, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "message": "registered successfully"})
+	writeOperationReply(c, http.StatusOK, "registered successfully")
 }
 
 // Login
@@ -56,25 +49,29 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param body body loginRequest true "登录信息"
-// @Success 200 {object} map[string]interface{}
 // @Router /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
-	var req loginRequest
+	var req apipb.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": err.Error()})
+		badRequest(c, err)
+		return
+	}
+	if err := validateLoginRequest(&req); err != nil {
+		badRequest(c, err)
 		return
 	}
 
-	token, err := h.uc.Login(req.Username, req.Password)
+	token, err := h.uc.Login(req.GetUsername(), req.GetPassword())
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"code": http.StatusUnauthorized, "message": err.Error()})
+		writeOperationReply(c, http.StatusUnauthorized, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"code":    http.StatusOK,
-		"message": "success",
-		"data":    gin.H{"token": token},
+	c.JSON(http.StatusOK, &apipb.LoginReply{
+		Code:    http.StatusOK,
+		Message: "success",
+		Data: &apipb.LoginData{
+			Token: token,
+		},
 	})
 }

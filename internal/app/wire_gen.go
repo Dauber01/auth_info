@@ -28,9 +28,11 @@ func InitializeApp(cfg *config.Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	authUseCase := bizauth.NewUseCase(db, cfg)
+	userRepository := data.NewUserRepository(db)
+	dictRepository := data.NewDictRepository(db)
+	authUseCase := bizauth.NewUseCase(userRepository, cfg)
 	helloUseCase := bizhello.NewUseCase()
-	dictUseCase := bizdict.NewUseCase(db)
+	dictUseCase := bizdict.NewUseCase(dictRepository)
 	documentUseCase := bizdoc.NewUseCase()
 	helloHandler := handler.NewHelloHandler(helloUseCase)
 	authHandler := handler.NewAuthHandler(authUseCase)

@@ -5,13 +5,13 @@ import (
 
 	"google.golang.org/grpc"
 
-	proto "auth_info/api/gen/api/proto"
+	apipb "auth_info/api/gen/api/proto"
 	bizhello "auth_info/internal/biz/hello"
 )
 
 // HelloService 实现 gRPC HelloServiceServer 接口
 type HelloService struct {
-	proto.UnimplementedHelloServiceServer
+	apipb.UnimplementedHelloServiceServer
 	uc *bizhello.UseCase
 }
 
@@ -21,15 +21,18 @@ func NewHelloService(uc *bizhello.UseCase) *HelloService {
 }
 
 // SayHello 实现 gRPC SayHello 方法
-func (s *HelloService) SayHello(ctx context.Context, req *proto.HelloRequest) (*proto.HelloReply, error) {
-	msg := s.uc.SayHello(req.Name)
-	return &proto.HelloReply{
-		Message: msg,
+func (s *HelloService) SayHello(ctx context.Context, req *apipb.HelloRequest) (*apipb.HelloReply, error) {
+	msg := s.uc.SayHello(req.GetName())
+	return &apipb.HelloReply{
 		Code:    0,
+		Message: "success",
+		Data: &apipb.HelloData{
+			Message: msg,
+		},
 	}, nil
 }
 
 // RegisterGRPCServices 注册所有 gRPC 服务
 func RegisterGRPCServices(server *grpc.Server, svc *HelloService) {
-	proto.RegisterHelloServiceServer(server, svc)
+	apipb.RegisterHelloServiceServer(server, svc)
 }
