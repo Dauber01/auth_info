@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	apipb "auth_info/api/gen/api/proto"
+	"auth_info/internal/apperr"
 	bizdoc "auth_info/internal/biz/document"
 	"auth_info/internal/data"
 	"auth_info/internal/validation"
@@ -21,6 +21,13 @@ func writeOperationReply(c *gin.Context, status int, message string) {
 		Code:    int32(status),
 		Message: message,
 	})
+}
+
+func writeError(c *gin.Context, err error) {
+	if err == nil {
+		return
+	}
+	writeOperationReply(c, apperr.HTTPStatus(err), apperr.Message(err))
 }
 
 func parseUintParam(c *gin.Context, key string) (uint64, error) {
@@ -156,5 +163,5 @@ func validateProtoRules(msg proto.Message) error {
 }
 
 func badRequest(c *gin.Context, err error) {
-	writeOperationReply(c, http.StatusBadRequest, err.Error())
+	writeError(c, apperr.New(apperr.CodeInvalidArgument, err.Error()))
 }

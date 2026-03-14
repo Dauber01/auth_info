@@ -18,6 +18,7 @@ import (
 	"auth_info/internal/middleware"
 	"auth_info/internal/router"
 	"auth_info/internal/service"
+	"auth_info/internal/validation"
 )
 
 type App struct {
@@ -66,7 +67,7 @@ func NewApp(
 		}
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(validation.UnaryServerInterceptor()))
 	service.RegisterGRPCServices(grpcServer, helloSvc)
 
 	return &App{

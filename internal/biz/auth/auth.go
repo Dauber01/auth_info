@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 
+	"auth_info/internal/apperr"
 	"auth_info/internal/config"
 	"auth_info/internal/data"
 	"auth_info/internal/logger"
@@ -33,18 +35,18 @@ func NewUseCase(users data.UserRepository, cfg *config.Config) *UseCase {
 }
 
 // Register 注册新用户（bcrypt 加密密码）
-func (uc *UseCase) Register(username, password string) error {
-	existing, err := uc.users.GetByUsername(username)
+func (uc *UseCase) Register(ctx context.Context, username, password string) error {
+	existing, err := uc.users.GetByUsername(ctx, username)
 	if err != nil {
-		return err
+		return apperr.Wrap(apperr.CodeInternal, "failed to query user", err)
 	}
 	if existing != nil {
-		return errors.New("username already exists")
+		return apperr.New(apperr.CodeConflict, "username already exists")
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return apperr.Wrap(apperr.CodeInternal, "failed to hash password", err)
 	}
 
 	user := data.User{
@@ -52,8 +54,8 @@ func (uc *UseCase) Register(username, password string) error {
 		Password: string(hash),
 		Role:     "user",
 	}
-	if err = uc.users.Create(&user); err != nil {
-		return err
+	if err = uc.users.Create(ctx, &user); err != nil {
+		return apperr.Wrap(apperr.CodeInternal, "failed to create user", err)
 	}
 
 	logger.GetLogger().Info("user registered", zap.String("username", username))
@@ -61,19 +63,22 @@ func (uc *UseCase) Register(username, password string) error {
 }
 
 // Login 验证用户名密码，成功后返回 JWT Token
-func (uc *UseCase) Login(username, password string) (string, error) {
-	user, err := uc.users.GetByUsername(username)
-	if err != nil || user == nil {
-		return "", errors.New("invalid credentials")
+func (uc *UseCase) Login(ctx context.Context, username, password string) (string, error) {
+	user, err := uc.users.GetByUsername(ctx, username)
+	if err != nil {
+		return "", apperr.Wrap(apperr.CodeInternal, "failed to query user", err)
+	}
+	if user == nil {
+		return "", apperr.New(apperr.CodeUnauthenticated, "invalid credentials")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return "", errors.New("invalid credentials")
+		return "", apperr.New(apperr.CodeUnauthenticated, "invalid credentials")
 	}
 
 	token, err := uc.generateToken(user)
 	if err != nil {
-		return "", err
+		return "", apperr.Wrap(apperr.CodeInternal, "failed to generate token", err)
 	}
 
 	logger.GetLogger().Info("user logged in", zap.String("username", username))
@@ -90,7 +95,7 @@ func (uc *UseCase) ParseToken(tokenStr string) (*Claims, error) {
 		return []byte(uc.cfg.JWT.Secret), nil
 	})
 	if err != nil || !token.Valid {
-		return nil, errors.New("invalid token")
+		return nil, apperr.New(apperr.CodeUnauthenticated, "invalid token")
 	}
 	return claims, nil
 }

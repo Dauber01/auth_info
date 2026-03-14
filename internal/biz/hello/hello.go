@@ -1,6 +1,8 @@
 package hello
 
 import (
+	"context"
+
 	"go.uber.org/zap"
 
 	"auth_info/internal/logger"
@@ -15,7 +17,8 @@ func NewUseCase() *UseCase {
 }
 
 // SayHello 处理 hello world 核心业务，name 为空时默认 "World"
-func (uc *UseCase) SayHello(name string) string {
+func (uc *UseCase) SayHello(ctx context.Context, name string) string {
+	_ = ctx
 	if name == "" {
 		name = "World"
 	}

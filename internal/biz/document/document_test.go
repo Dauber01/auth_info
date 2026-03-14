@@ -3,6 +3,7 @@ package document
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"os"
 	"strings"
@@ -39,7 +40,7 @@ func TestGeneratePDF_WithImage(t *testing.T) {
 		"SignatureBase64": signature,
 	}
 
-	pdfBytes, err := uc.GeneratePDF("example_template", data)
+	pdfBytes, err := uc.GeneratePDF(context.Background(), "example_template", data)
 	if err != nil {
 		t.Fatalf("GeneratePDF() 错误 = %v", err)
 	}
@@ -68,7 +69,7 @@ func TestGenerateWord_WithTextAndImage(t *testing.T) {
 
 	// word_template_test.docx 已常驻于 templates/ 目录，直接使用
 	uc := NewUseCase()
-	wordBytes, err := uc.GenerateWord("word_template_test", WordTemplateData{
+	wordBytes, err := uc.GenerateWord(context.Background(), "word_template_test", WordTemplateData{
 		Texts: map[string]RichText{
 			"Name": {Runs: []RichRun{{Text: "张三"}}},
 		},
@@ -159,7 +160,7 @@ func TestGenerateWord_RichTextAndImageOptions(t *testing.T) {
 		},
 	}
 
-	wordBytes, err := uc.GenerateWord("word_template_test", data)
+	wordBytes, err := uc.GenerateWord(context.Background(), "word_template_test", data)
 	if err != nil {
 		t.Fatalf("GenerateWord() 错误 = %v", err)
 	}

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -33,27 +32,18 @@ func (h *DocumentHandler) GeneratePDF(c *gin.Context) {
 		return
 	}
 	if err := validateProtoRules(&req); err != nil {
-		badRequest(c, err)
+		writeError(c, err)
 		return
 	}
 
-	pdfBytes, err := h.uc.GeneratePDF(req.GetTemplateName(), structToMap(req.GetData()))
+	pdfBytes, err := h.uc.GeneratePDF(c.Request.Context(), req.GetTemplateName(), structToMap(req.GetData()))
 	if err != nil {
-		status := http.StatusInternalServerError
-		if isNotFoundErr(err) {
-			status = http.StatusNotFound
-		}
-		writeOperationReply(c, status, err.Error())
+		writeError(c, err)
 		return
 	}
 
 	c.Header("Content-Disposition", `attachment; filename="document.pdf"`)
 	c.Data(http.StatusOK, "application/pdf", pdfBytes)
-}
-
-// isNotFoundErr 判断是否为模板未找到错误
-func isNotFoundErr(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "template not found")
 }
 
 // GenerateWord 生成 Word 文档
@@ -70,17 +60,13 @@ func (h *DocumentHandler) GenerateWord(c *gin.Context) {
 		return
 	}
 	if err := validateProtoRules(&req); err != nil {
-		badRequest(c, err)
+		writeError(c, err)
 		return
 	}
 
-	wordBytes, err := h.uc.GenerateWord(req.GetTemplateName(), structToWordTemplateData(req.GetData()))
+	wordBytes, err := h.uc.GenerateWord(c.Request.Context(), req.GetTemplateName(), structToWordTemplateData(req.GetData()))
 	if err != nil {
-		status := http.StatusInternalServerError
-		if isNotFoundErr(err) {
-			status = http.StatusNotFound
-		}
-		writeOperationReply(c, status, err.Error())
+		writeError(c, err)
 		return
 	}
 

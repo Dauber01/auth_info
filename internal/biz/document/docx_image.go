@@ -3,6 +3,7 @@ package document
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"fmt"
 	"image"
 	_ "image/jpeg"
@@ -12,7 +13,7 @@ import (
 )
 
 // injectImagesToDocx 向 docx 模板字节流中注入图片，直接替换 {key} 占位符。
-func (uc *UseCase) injectImagesToDocx(docxBytes []byte, imageData map[string]ImageValue) ([]byte, error) {
+func (uc *UseCase) injectImagesToDocx(ctx context.Context, docxBytes []byte, imageData map[string]ImageValue) ([]byte, error) {
 	zr, err := zip.NewReader(bytes.NewReader(docxBytes), int64(len(docxBytes)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read docx zip: %w", err)
@@ -36,7 +37,7 @@ func (uc *UseCase) injectImagesToDocx(docxBytes []byte, imageData map[string]Ima
 
 	for _, p := range indexedImagePairs(imageData) {
 		// 获取图片字节流（支持 URL 和 base64）
-		imgBytes, err := uc.fetchImageBytes(p.val)
+		imgBytes, err := uc.fetchImageBytes(ctx, p.val)
 		if err != nil {
 			return nil, fmt.Errorf("image key %q: %w", p.key, err)
 		}

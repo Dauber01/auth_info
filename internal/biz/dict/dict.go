@@ -1,10 +1,11 @@
 package dict
 
 import (
-	"errors"
+	"context"
 
 	"go.uber.org/zap"
 
+	"auth_info/internal/apperr"
 	"auth_info/internal/data"
 	"auth_info/internal/logger"
 )
@@ -20,18 +21,22 @@ func NewUseCase(repo data.DictRepository) *UseCase {
 }
 
 // ListDictTypes 获取所有字典类型，按 sort 正序排列
-func (uc *UseCase) ListDictTypes() ([]data.DictType, error) {
-	return uc.repo.ListDictTypes()
+func (uc *UseCase) ListDictTypes(ctx context.Context) ([]data.DictType, error) {
+	types, err := uc.repo.ListDictTypes(ctx)
+	if err != nil {
+		return nil, apperr.Wrap(apperr.CodeInternal, "failed to list dict types", err)
+	}
+	return types, nil
 }
 
 // CreateDictType 创建字典类型
-func (uc *UseCase) CreateDictType(code, name, description string, sort int) error {
-	existing, err := uc.repo.GetDictTypeByCode(code)
+func (uc *UseCase) CreateDictType(ctx context.Context, code, name, description string, sort int) error {
+	existing, err := uc.repo.GetDictTypeByCode(ctx, code)
 	if err != nil {
-		return err
+		return apperr.Wrap(apperr.CodeInternal, "failed to query dict type", err)
 	}
 	if existing != nil {
-		return errors.New("dict type code already exists")
+		return apperr.New(apperr.CodeConflict, "dict type code already exists")
 	}
 
 	dictType := data.DictType{
@@ -40,8 +45,8 @@ func (uc *UseCase) CreateDictType(code, name, description string, sort int) erro
 		Description: description,
 		Sort:        sort,
 	}
-	if err := uc.repo.CreateDictType(&dictType); err != nil {
-		return err
+	if err := uc.repo.CreateDictType(ctx, &dictType); err != nil {
+		return apperr.Wrap(apperr.CodeInternal, "failed to create dict type", err)
 	}
 
 	logger.GetLogger().Info("dict type created", zap.String("code", code))
@@ -49,13 +54,13 @@ func (uc *UseCase) CreateDictType(code, name, description string, sort int) erro
 }
 
 // UpdateDictType 更新字典类型（code 不可修改）
-func (uc *UseCase) UpdateDictType(id uint, name, description string, sort int) error {
-	updated, err := uc.repo.UpdateDictType(id, name, description, sort)
+func (uc *UseCase) UpdateDictType(ctx context.Context, id uint, name, description string, sort int) error {
+	updated, err := uc.repo.UpdateDictType(ctx, id, name, description, sort)
 	if err != nil {
-		return err
+		return apperr.Wrap(apperr.CodeInternal, "failed to update dict type", err)
 	}
 	if !updated {
-		return errors.New("dict type not found")
+		return apperr.New(apperr.CodeNotFound, "dict type not found")
 	}
 
 	logger.GetLogger().Info("dict type updated", zap.Uint("id", id))
@@ -63,13 +68,13 @@ func (uc *UseCase) UpdateDictType(id uint, name, description string, sort int) e
 }
 
 // DeleteDictType 软删除字典类型
-func (uc *UseCase) DeleteDictType(id uint) error {
-	deleted, err := uc.repo.DeleteDictType(id)
+func (uc *UseCase) DeleteDictType(ctx context.Context, id uint) error {
+	deleted, err := uc.repo.DeleteDictType(ctx, id)
 	if err != nil {
-		return err
+		return apperr.Wrap(apperr.CodeInternal, "failed to delete dict type", err)
 	}
 	if !deleted {
-		return errors.New("dict type not found")
+		return apperr.New(apperr.CodeNotFound, "dict type not found")
 	}
 
 	logger.GetLogger().Info("dict type deleted", zap.Uint("id", id))
@@ -77,12 +82,16 @@ func (uc *UseCase) DeleteDictType(id uint) error {
 }
 
 // ListDictItems 根据类型编码获取字典数据，按 sort 正序排列
-func (uc *UseCase) ListDictItems(typeCode string) ([]data.DictItem, error) {
-	return uc.repo.ListDictItems(typeCode)
+func (uc *UseCase) ListDictItems(ctx context.Context, typeCode string) ([]data.DictItem, error) {
+	items, err := uc.repo.ListDictItems(ctx, typeCode)
+	if err != nil {
+		return nil, apperr.Wrap(apperr.CodeInternal, "failed to list dict items", err)
+	}
+	return items, nil
 }
 
 // CreateDictItem 创建字典数据
-func (uc *UseCase) CreateDictItem(typeCode, itemKey, itemValue, description string, sort int) error {
+func (uc *UseCase) CreateDictItem(ctx context.Context, typeCode, itemKey, itemValue, description string, sort int) error {
 	item := data.DictItem{
 		TypeCode:    typeCode,
 		ItemKey:     itemKey,
@@ -91,8 +100,8 @@ func (uc *UseCase) CreateDictItem(typeCode, itemKey, itemValue, description stri
 		Sort:        sort,
 		Status:      1,
 	}
-	if err := uc.repo.CreateDictItem(&item); err != nil {
-		return err
+	if err := uc.repo.CreateDictItem(ctx, &item); err != nil {
+		return apperr.Wrap(apperr.CodeInternal, "failed to create dict item", err)
 	}
 
 	logger.GetLogger().Info("dict item created",
@@ -103,13 +112,13 @@ func (uc *UseCase) CreateDictItem(typeCode, itemKey, itemValue, description stri
 }
 
 // UpdateDictItem 更新字典数据
-func (uc *UseCase) UpdateDictItem(id uint, itemKey, itemValue, description string, sort, status int) error {
-	updated, err := uc.repo.UpdateDictItem(id, itemKey, itemValue, description, sort, status)
+func (uc *UseCase) UpdateDictItem(ctx context.Context, id uint, itemKey, itemValue, description string, sort, status int) error {
+	updated, err := uc.repo.UpdateDictItem(ctx, id, itemKey, itemValue, description, sort, status)
 	if err != nil {
-		return err
+		return apperr.Wrap(apperr.CodeInternal, "failed to update dict item", err)
 	}
 	if !updated {
-		return errors.New("dict item not found")
+		return apperr.New(apperr.CodeNotFound, "dict item not found")
 	}
 
 	logger.GetLogger().Info("dict item updated", zap.Uint("id", id))
@@ -117,13 +126,13 @@ func (uc *UseCase) UpdateDictItem(id uint, itemKey, itemValue, description strin
 }
 
 // DeleteDictItem 软删除字典数据
-func (uc *UseCase) DeleteDictItem(id uint) error {
-	deleted, err := uc.repo.DeleteDictItem(id)
+func (uc *UseCase) DeleteDictItem(ctx context.Context, id uint) error {
+	deleted, err := uc.repo.DeleteDictItem(ctx, id)
 	if err != nil {
-		return err
+		return apperr.Wrap(apperr.CodeInternal, "failed to delete dict item", err)
 	}
 	if !deleted {
-		return errors.New("dict item not found")
+		return apperr.New(apperr.CodeNotFound, "dict item not found")
 	}
 
 	logger.GetLogger().Info("dict item deleted", zap.Uint("id", id))

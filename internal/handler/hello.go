@@ -1,4 +1,4 @@
-﻿package handler
+package handler
 
 import (
 	"net/http"
@@ -33,7 +33,7 @@ func NewHelloHandler(uc *bizhello.UseCase) *HelloHandler {
 // @Router /hello [get]
 func (h *HelloHandler) Hello(c *gin.Context) {
 	req := apipb.HelloRequest{Name: strings.TrimSpace(c.Query("name"))}
-	msg := h.uc.SayHello(req.GetName())
+	msg := h.uc.SayHello(c.Request.Context(), req.GetName())
 
 	c.JSON(http.StatusOK, &apipb.HelloReply{
 		Code:    http.StatusOK,

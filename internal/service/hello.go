@@ -22,7 +22,7 @@ func NewHelloService(uc *bizhello.UseCase) *HelloService {
 
 // SayHello 实现 gRPC SayHello 方法
 func (s *HelloService) SayHello(ctx context.Context, req *apipb.HelloRequest) (*apipb.HelloReply, error) {
-	msg := s.uc.SayHello(req.GetName())
+	msg := s.uc.SayHello(ctx, req.GetName())
 	return &apipb.HelloReply{
 		Code:    0,
 		Message: "success",

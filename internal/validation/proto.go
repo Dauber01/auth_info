@@ -8,6 +8,8 @@ import (
 
 	"buf.build/go/protovalidate"
 	"google.golang.org/protobuf/proto"
+
+	"auth_info/internal/apperr"
 )
 
 var (
@@ -20,15 +22,20 @@ var (
 // "field: message" format for API responses.
 func ValidateProto(msg proto.Message) error {
 	if msg == nil {
-		return fmt.Errorf("request is required")
+		return apperr.New(apperr.CodeInvalidArgument, "request is required")
 	}
 
 	v, err := getValidator()
 	if err != nil {
-		return err
+		return apperr.Wrap(apperr.CodeInternal, "failed to initialize validator", err)
 	}
 	if err := v.Validate(msg); err != nil {
-		return mapValidationError(err)
+		var valErr *protovalidate.ValidationError
+		if errors.As(err, &valErr) {
+			mapped := mapValidationError(err)
+			return apperr.New(apperr.CodeInvalidArgument, mapped.Error())
+		}
+		return apperr.Wrap(apperr.CodeInternal, "failed to validate request", err)
 	}
 	return nil
 }

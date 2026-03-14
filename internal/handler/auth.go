@@ -32,12 +32,12 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 	if err := validateProtoRules(&req); err != nil {
-		badRequest(c, err)
+		writeError(c, err)
 		return
 	}
 
-	if err := h.uc.Register(req.GetUsername(), req.GetPassword()); err != nil {
-		writeOperationReply(c, http.StatusConflict, err.Error())
+	if err := h.uc.Register(c.Request.Context(), req.GetUsername(), req.GetPassword()); err != nil {
+		writeError(c, err)
 		return
 	}
 
@@ -57,13 +57,13 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 	if err := validateProtoRules(&req); err != nil {
-		badRequest(c, err)
+		writeError(c, err)
 		return
 	}
 
-	token, err := h.uc.Login(req.GetUsername(), req.GetPassword())
+	token, err := h.uc.Login(c.Request.Context(), req.GetUsername(), req.GetPassword())
 	if err != nil {
-		writeOperationReply(c, http.StatusUnauthorized, err.Error())
+		writeError(c, err)
 		return
 	}
 

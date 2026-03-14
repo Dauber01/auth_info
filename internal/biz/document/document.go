@@ -2,6 +2,7 @@ package document
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -13,6 +14,8 @@ import (
 	"text/template"
 
 	"github.com/go-pdf/fpdf"
+
+	"auth_info/internal/apperr"
 )
 
 // RichRun 富文本中的一段文字，可独立设置样式
@@ -29,7 +32,7 @@ type RichText struct {
 
 // ImageValue 图片值，支持原始尺寸和最大尺寸限制
 type ImageValue struct {
-	ImageURL     string  `json:"image_url"`              // 图片 URL 地址（优先）或 data:image/... base64（兼容）
+	ImageURL     string  `json:"image_url"`               // 图片 URL 地址（优先）或 data:image/... base64（兼容）
 	OriginalSize bool    `json:"original_size,omitempty"` // true=使用图片原始像素尺寸（按 96dpi 换算 EMU）
 	MaxWidthPx   float64 `json:"max_width_px,omitempty"`  // 最大宽度（像素），0=不限
 	MaxHeightPx  float64 `json:"max_height_px,omitempty"` // 最大高度（像素），0=不限
@@ -76,31 +79,37 @@ type templateSection struct {
 }
 
 // GeneratePDF 根据模板名称和数据生成 PDF，返回字节流
-func (uc *UseCase) GeneratePDF(templateName string, data map[string]any) ([]byte, error) {
+func (uc *UseCase) GeneratePDF(ctx context.Context, templateName string, data map[string]any) ([]byte, error) {
+	_ = ctx
+
 	// 1. 读取模板文件
 	tmplPath := fmt.Sprintf("%s/%s.json", uc.templateDir, templateName)
 	tmplRaw, err := os.ReadFile(tmplPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("template not found: %s", templateName)
+			return nil, apperr.New(apperr.CodeNotFound, fmt.Sprintf("template not found: %s", templateName))
 		}
-		return nil, fmt.Errorf("failed to read template: %w", err)
+		return nil, apperr.Wrap(apperr.CodeInternal, "failed to read template", err)
 	}
 
 	// 2. 用 text/template 渲染 JSON（填充占位符）
 	rendered, err := renderTemplate(string(tmplRaw), data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to render template: %w", err)
+		return nil, apperr.Wrap(apperr.CodeInvalidArgument, "failed to render template", err)
 	}
 
 	// 3. 解析渲染后的 JSON
 	var doc documentTemplate
 	if err := json.Unmarshal([]byte(rendered), &doc); err != nil {
-		return nil, fmt.Errorf("failed to parse template JSON after rendering: %w", err)
+		return nil, apperr.Wrap(apperr.CodeInternal, "failed to parse template JSON after rendering", err)
 	}
 
 	// 4. 生成 PDF
-	return uc.buildPDF(&doc)
+	pdfBytes, err := uc.buildPDF(&doc)
+	if err != nil {
+		return nil, apperr.Wrap(apperr.CodeInternal, "failed to build PDF", err)
+	}
+	return pdfBytes, nil
 }
 
 // renderTemplate 使用 text/template 将数据填充到模板字符串中
@@ -265,15 +274,15 @@ func (uc *UseCase) drawImage(pdf *fpdf.Fpdf, sec *templateSection) error {
 // data.Texts 支持富文本（多段样式、换行、加粗、颜色）
 // data.Images 支持原始尺寸和最大尺寸限制
 // 模板占位符格式：{key}
-func (uc *UseCase) GenerateWord(templateName string, data WordTemplateData) ([]byte, error) {
+func (uc *UseCase) GenerateWord(ctx context.Context, templateName string, data WordTemplateData) ([]byte, error) {
 	tmplPath := fmt.Sprintf("%s/%s.docx", uc.templateDir, templateName)
 
 	docBytes, err := os.ReadFile(tmplPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("template not found: %s", templateName)
+			return nil, apperr.New(apperr.CodeNotFound, fmt.Sprintf("template not found: %s", templateName))
 		}
-		return nil, fmt.Errorf("failed to read template: %w", err)
+		return nil, apperr.Wrap(apperr.CodeInternal, "failed to read template", err)
 	}
 
 	result := docBytes
@@ -282,15 +291,15 @@ func (uc *UseCase) GenerateWord(templateName string, data WordTemplateData) ([]b
 	if len(data.Texts) > 0 {
 		result, err = injectRichTextToDocx(result, data.Texts)
 		if err != nil {
-			return nil, err
+			return nil, apperr.Wrap(apperr.CodeInternal, "failed to inject rich text", err)
 		}
 	}
 
 	// 注入图片（直接替换模板里的 {key}）
 	if len(data.Images) > 0 {
-		result, err = uc.injectImagesToDocx(result, data.Images)
+		result, err = uc.injectImagesToDocx(ctx, result, data.Images)
 		if err != nil {
-			return nil, err
+			return nil, apperr.Wrap(apperr.CodeInternal, "failed to inject images", err)
 		}
 	}
 
@@ -301,16 +310,24 @@ func (uc *UseCase) GenerateWord(templateName string, data WordTemplateData) ([]b
 // 支持两种格式：
 //   - URL: http(s)://... 通过 HTTP GET 获取
 //   - Base64: data:image/...;base64,... 直接解码（兼容旧格式）
-func (uc *UseCase) fetchImageBytes(imgVal ImageValue) ([]byte, error) {
+func (uc *UseCase) fetchImageBytes(ctx context.Context, imgVal ImageValue) ([]byte, error) {
 	src := imgVal.ImageURL
 	if src == "" {
-		return nil, fmt.Errorf("image_url is empty")
+		return nil, apperr.New(apperr.CodeInvalidArgument, "image_url is empty")
+	}
+
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
 	// 判断是 URL 还是 base64
 	if strings.HasPrefix(src, "http://") || strings.HasPrefix(src, "https://") {
 		// HTTP 获取
-		resp, err := uc.httpClient.Get(src)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, src, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build image request: %w", err)
+		}
+		resp, err := uc.httpClient.Do(req)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch image from URL: %w", err)
 		}

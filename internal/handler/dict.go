@@ -27,9 +27,9 @@ func NewDictHandler(uc *bizdict.UseCase) *DictHandler {
 // @Security BearerAuth
 // @Router   /dict/types [get]
 func (h *DictHandler) ListDictTypes(c *gin.Context) {
-	types, err := h.uc.ListDictTypes()
+	types, err := h.uc.ListDictTypes(c.Request.Context())
 	if err != nil {
-		writeOperationReply(c, http.StatusInternalServerError, err.Error())
+		writeError(c, err)
 		return
 	}
 
@@ -54,12 +54,12 @@ func (h *DictHandler) CreateDictType(c *gin.Context) {
 		return
 	}
 	if err := validateProtoRules(&req); err != nil {
-		badRequest(c, err)
+		writeError(c, err)
 		return
 	}
 
-	if err := h.uc.CreateDictType(req.GetCode(), req.GetName(), req.GetDescription(), int(req.GetSort())); err != nil {
-		writeOperationReply(c, http.StatusConflict, err.Error())
+	if err := h.uc.CreateDictType(c.Request.Context(), req.GetCode(), req.GetName(), req.GetDescription(), int(req.GetSort())); err != nil {
+		writeError(c, err)
 		return
 	}
 
@@ -87,12 +87,12 @@ func (h *DictHandler) UpdateDictType(c *gin.Context) {
 	}
 	req.Id = id
 	if err := validateProtoRules(&req); err != nil {
-		badRequest(c, err)
+		writeError(c, err)
 		return
 	}
 
-	if err := h.uc.UpdateDictType(uint(req.GetId()), req.GetName(), req.GetDescription(), int(req.GetSort())); err != nil {
-		writeOperationReply(c, http.StatusNotFound, err.Error())
+	if err := h.uc.UpdateDictType(c.Request.Context(), uint(req.GetId()), req.GetName(), req.GetDescription(), int(req.GetSort())); err != nil {
+		writeError(c, err)
 		return
 	}
 
@@ -114,12 +114,12 @@ func (h *DictHandler) DeleteDictType(c *gin.Context) {
 	}
 	req.Id = id
 	if err := validateProtoRules(&req); err != nil {
-		badRequest(c, err)
+		writeError(c, err)
 		return
 	}
 
-	if err := h.uc.DeleteDictType(uint(req.GetId())); err != nil {
-		writeOperationReply(c, http.StatusNotFound, err.Error())
+	if err := h.uc.DeleteDictType(c.Request.Context(), uint(req.GetId())); err != nil {
+		writeError(c, err)
 		return
 	}
 
@@ -135,13 +135,13 @@ func (h *DictHandler) DeleteDictType(c *gin.Context) {
 func (h *DictHandler) ListDictItems(c *gin.Context) {
 	req := apipb.ListDictItemsRequest{TypeCode: strings.TrimSpace(c.Query("type_code"))}
 	if err := validateProtoRules(&req); err != nil {
-		badRequest(c, err)
+		writeError(c, err)
 		return
 	}
 
-	items, err := h.uc.ListDictItems(req.GetTypeCode())
+	items, err := h.uc.ListDictItems(c.Request.Context(), req.GetTypeCode())
 	if err != nil {
-		writeOperationReply(c, http.StatusInternalServerError, err.Error())
+		writeError(c, err)
 		return
 	}
 
@@ -166,12 +166,12 @@ func (h *DictHandler) CreateDictItem(c *gin.Context) {
 		return
 	}
 	if err := validateProtoRules(&req); err != nil {
-		badRequest(c, err)
+		writeError(c, err)
 		return
 	}
 
-	if err := h.uc.CreateDictItem(req.GetTypeCode(), req.GetItemKey(), req.GetItemValue(), req.GetDescription(), int(req.GetSort())); err != nil {
-		writeOperationReply(c, http.StatusInternalServerError, err.Error())
+	if err := h.uc.CreateDictItem(c.Request.Context(), req.GetTypeCode(), req.GetItemKey(), req.GetItemValue(), req.GetDescription(), int(req.GetSort())); err != nil {
+		writeError(c, err)
 		return
 	}
 
@@ -199,12 +199,12 @@ func (h *DictHandler) UpdateDictItem(c *gin.Context) {
 	}
 	req.Id = id
 	if err := validateProtoRules(&req); err != nil {
-		badRequest(c, err)
+		writeError(c, err)
 		return
 	}
 
-	if err := h.uc.UpdateDictItem(uint(req.GetId()), req.GetItemKey(), req.GetItemValue(), req.GetDescription(), int(req.GetSort()), int(req.GetStatus())); err != nil {
-		writeOperationReply(c, http.StatusNotFound, err.Error())
+	if err := h.uc.UpdateDictItem(c.Request.Context(), uint(req.GetId()), req.GetItemKey(), req.GetItemValue(), req.GetDescription(), int(req.GetSort()), int(req.GetStatus())); err != nil {
+		writeError(c, err)
 		return
 	}
 
@@ -226,12 +226,12 @@ func (h *DictHandler) DeleteDictItem(c *gin.Context) {
 	}
 	req.Id = id
 	if err := validateProtoRules(&req); err != nil {
-		badRequest(c, err)
+		writeError(c, err)
 		return
 	}
 
-	if err := h.uc.DeleteDictItem(uint(req.GetId())); err != nil {
-		writeOperationReply(c, http.StatusNotFound, err.Error())
+	if err := h.uc.DeleteDictItem(c.Request.Context(), uint(req.GetId())); err != nil {
+		writeError(c, err)
 		return
 	}
 
