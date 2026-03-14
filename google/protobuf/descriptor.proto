@@ -1,9 +1,0 @@
-﻿syntax = "proto2";
-
-package google.protobuf;
-
-option go_package = "google.golang.org/protobuf/types/descriptorpb";
-
-message FieldOptions {
-  extensions 1000 to max;
-}

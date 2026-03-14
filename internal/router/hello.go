@@ -1,4 +1,4 @@
-package app
+package router
 
 import (
 	"github.com/gin-gonic/gin"
@@ -6,6 +6,6 @@ import (
 	"auth_info/internal/handler"
 )
 
-func registerHelloRoutes(protected *gin.RouterGroup, helloHandler *handler.HelloHandler) {
+func RegisterHelloRoutes(protected *gin.RouterGroup, helloHandler *handler.HelloHandler) {
 	protected.GET("/hello", helloHandler.Hello)
 }

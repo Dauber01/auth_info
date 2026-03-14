@@ -1,4 +1,4 @@
-package app
+package router
 
 import (
 	"github.com/gin-gonic/gin"
@@ -6,7 +6,7 @@ import (
 	"auth_info/internal/handler"
 )
 
-func registerDictRoutes(protected *gin.RouterGroup, dictHandler *handler.DictHandler) {
+func RegisterDictRoutes(protected *gin.RouterGroup, dictHandler *handler.DictHandler) {
 	dict := protected.Group("/dict")
 	{
 		dict.GET("/types", dictHandler.ListDictTypes)

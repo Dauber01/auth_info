@@ -55,7 +55,7 @@ goto end
 :proto
 echo Generating proto code...
 if not exist %GEN_DIR% mkdir %GEN_DIR%
-protoc --go_out=%GEN_DIR% --go_opt=paths=source_relative --go-grpc_out=%GEN_DIR% --go-grpc_opt=paths=source_relative %PROTO_DIR%\*.proto
+protoc --proto_path=%PROTO_DIR%\third_party --proto_path=. --proto_path=%PROTO_DIR% --go_out=%GEN_DIR% --go_opt=paths=source_relative --go-grpc_out=%GEN_DIR% --go-grpc_opt=paths=source_relative %PROTO_DIR%\*.proto
 if %errorlevel% neq 0 (
     echo Error: protoc not installed or generation failed
     echo Please install protoc: https://github.com/protocolbuffers/protobuf/releases

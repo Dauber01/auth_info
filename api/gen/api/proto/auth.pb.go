@@ -7,6 +7,7 @@
 package apipb
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -233,13 +234,13 @@ var File_api_proto_auth_proto protoreflect.FileDescriptor
 
 const file_api_proto_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x14api/proto/auth.proto\x12\x03api\"I\n" +
-	"\x0fRegisterRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"F\n" +
-	"\fLoginRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"!\n" +
+	"\x14api/proto/auth.proto\x12\x03api\x1a\x1bbuf/validate/validate.proto\"e\n" +
+	"\x0fRegisterRequest\x12(\n" +
+	"\busername\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x03\x18 R\busername\x12(\n" +
+	"\bpassword\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x06\x18@R\bpassword\"b\n" +
+	"\fLoginRequest\x12(\n" +
+	"\busername\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18 R\busername\x12(\n" +
+	"\bpassword\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\bpassword\"!\n" +
 	"\tLoginData\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\"^\n" +
 	"\n" +

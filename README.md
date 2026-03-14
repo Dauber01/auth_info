@@ -1,4 +1,4 @@
-﻿# Auth Info - Gin + Wire + gRPC + Proto 项目框架
+# Auth Info - Gin + Wire + gRPC + Proto 项目框架
 
 这是一个使用 Gin、Google Wire、Protocol Buffers 和 gRPC 的完整项目框架示例。
 
@@ -43,6 +43,8 @@
 - 所有对外的请求结构和响应结构统一由 `api/proto/` 生成，HTTP 和 gRPC 共用同一套契约。
 - `api/proto/` 按业务拆分为 `common.proto`、`auth.proto`、`dict.proto`、`document.proto`、`hello.proto`，便于后续继续扩展模块。
 - 所有业务 proto 统一使用 `option go_package = "auth_info/api/gen/api/proto;apipb"`，生成代码集中在 `api/gen/api/proto/`。
+- 参数校验统一使用 Protovalidate，规则在业务 proto 中通过 `buf.validate` 注解声明（例如 `(buf.validate.field).string.max_len`）。
+- 为了支持 `buf.validate` 导入，仓库内提供 `api/proto/buf/validate/validate.proto`，并在 proto 生成时额外包含 `--proto_path=api/proto/third_party --proto_path=. --proto_path=api/proto`。
 
 ## Makefile 命令
 

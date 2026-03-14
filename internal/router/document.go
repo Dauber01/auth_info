@@ -1,4 +1,4 @@
-package app
+package router
 
 import (
 	"github.com/gin-gonic/gin"
@@ -6,7 +6,7 @@ import (
 	"auth_info/internal/handler"
 )
 
-func registerDocumentRoutes(protected *gin.RouterGroup, documentHandler *handler.DocumentHandler) {
+func RegisterDocumentRoutes(protected *gin.RouterGroup, documentHandler *handler.DocumentHandler) {
 	doc := protected.Group("/document")
 	{
 		doc.POST("/generate-pdf", documentHandler.GeneratePDF)

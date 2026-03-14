@@ -16,6 +16,7 @@ import (
 	"auth_info/internal/handler"
 	"auth_info/internal/logger"
 	"auth_info/internal/middleware"
+	"auth_info/internal/router"
 	"auth_info/internal/service"
 )
 
@@ -51,17 +52,17 @@ func NewApp(
 
 	api := engine.Group("/api/v1")
 	{
-		// 公开路由（无需鉴权）
-		registerAuthRoutes(api, authHandler)
+		// Public routes (no auth)
+		router.RegisterAuthRoutes(api, authHandler)
 
-		// 受保护路由（JWT + Casbin）
+		// Protected routes (JWT + Casbin)
 		protected := api.Group("")
 		protected.Use(middleware.JWTAuth(authUC))
 		protected.Use(middleware.CasbinAuth(enforcer))
 		{
-			registerHelloRoutes(protected, helloHandler)
-			registerDictRoutes(protected, dictHandler)
-			registerDocumentRoutes(protected, documentHandler)
+			router.RegisterHelloRoutes(protected, helloHandler)
+			router.RegisterDictRoutes(protected, dictHandler)
+			router.RegisterDocumentRoutes(protected, documentHandler)
 		}
 	}
 

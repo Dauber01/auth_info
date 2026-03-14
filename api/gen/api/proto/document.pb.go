@@ -7,6 +7,7 @@
 package apipb
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -130,13 +131,15 @@ var File_api_proto_document_proto protoreflect.FileDescriptor
 
 const file_api_proto_document_proto_rawDesc = "" +
 	"\n" +
-	"\x18api/proto/document.proto\x12\x03api\x1a\x1cgoogle/protobuf/struct.proto\"f\n" +
-	"\x12GeneratePDFRequest\x12#\n" +
-	"\rtemplate_name\x18\x01 \x01(\tR\ftemplateName\x12+\n" +
-	"\x04data\x18\x02 \x01(\v2\x17.google.protobuf.StructR\x04data\"g\n" +
-	"\x13GenerateWordRequest\x12#\n" +
-	"\rtemplate_name\x18\x01 \x01(\tR\ftemplateName\x12+\n" +
-	"\x04data\x18\x02 \x01(\v2\x17.google.protobuf.StructR\x04dataB#Z!auth_info/api/gen/api/proto;apipbb\x06proto3"
+	"\x18api/proto/document.proto\x12\x03api\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1bbuf/validate/validate.proto\"z\n" +
+	"\x12GeneratePDFRequest\x12/\n" +
+	"\rtemplate_name\x18\x01 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\ftemplateName\x123\n" +
+	"\x04data\x18\x02 \x01(\v2\x17.google.protobuf.StructB\x06\xbaH\x03\xc8\x01\x01R\x04data\"{\n" +
+	"\x13GenerateWordRequest\x12/\n" +
+	"\rtemplate_name\x18\x01 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\ftemplateName\x123\n" +
+	"\x04data\x18\x02 \x01(\v2\x17.google.protobuf.StructB\x06\xbaH\x03\xc8\x01\x01R\x04dataB#Z!auth_info/api/gen/api/proto;apipbb\x06proto3"
 
 var (
 	file_api_proto_document_proto_rawDescOnce sync.Once

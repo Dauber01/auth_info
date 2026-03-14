@@ -31,7 +31,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		badRequest(c, err)
 		return
 	}
-	if err := validateRegisterRequest(&req); err != nil {
+	if err := validateProtoRules(&req); err != nil {
 		badRequest(c, err)
 		return
 	}
@@ -56,7 +56,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		badRequest(c, err)
 		return
 	}
-	if err := validateLoginRequest(&req); err != nil {
+	if err := validateProtoRules(&req); err != nil {
 		badRequest(c, err)
 		return
 	}

@@ -1,17 +1,24 @@
-﻿syntax = "proto3";
+syntax = "proto3";
 
 package api;
 
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
 option go_package = "auth_info/api/gen/api/proto;apipb";
 
-import "google/protobuf/struct.proto";
-
 message GeneratePDFRequest {
-  string template_name = 1;
-  google.protobuf.Struct data = 2;
+  string template_name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  google.protobuf.Struct data = 2 [(buf.validate.field).required = true];
 }
 
 message GenerateWordRequest {
-  string template_name = 1;
-  google.protobuf.Struct data = 2;
+  string template_name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  google.protobuf.Struct data = 2 [(buf.validate.field).required = true];
 }

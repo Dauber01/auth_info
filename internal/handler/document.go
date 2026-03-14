@@ -32,7 +32,7 @@ func (h *DocumentHandler) GeneratePDF(c *gin.Context) {
 		badRequest(c, err)
 		return
 	}
-	if err := validateDocumentTemplateRequest(req.GetTemplateName(), req.GetData()); err != nil {
+	if err := validateProtoRules(&req); err != nil {
 		badRequest(c, err)
 		return
 	}
@@ -69,7 +69,7 @@ func (h *DocumentHandler) GenerateWord(c *gin.Context) {
 		badRequest(c, err)
 		return
 	}
-	if err := validateDocumentTemplateRequest(req.GetTemplateName(), req.GetData()); err != nil {
+	if err := validateProtoRules(&req); err != nil {
 		badRequest(c, err)
 		return
 	}

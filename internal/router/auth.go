@@ -1,4 +1,4 @@
-package app
+package router
 
 import (
 	"github.com/gin-gonic/gin"
@@ -6,7 +6,7 @@ import (
 	"auth_info/internal/handler"
 )
 
-func registerAuthRoutes(api *gin.RouterGroup, authHandler *handler.AuthHandler) {
+func RegisterAuthRoutes(api *gin.RouterGroup, authHandler *handler.AuthHandler) {
 	auth := api.Group("/auth")
 	{
 		auth.POST("/register", authHandler.Register)
