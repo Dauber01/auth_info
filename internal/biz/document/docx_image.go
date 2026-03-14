@@ -3,7 +3,6 @@ package document
 import (
 	"archive/zip"
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"image"
 	_ "image/jpeg"
@@ -12,8 +11,8 @@ import (
 	"strings"
 )
 
-// injectImagesToDocx 向已完成文本替换的 docx 字节流中注入图片。
-func injectImagesToDocx(docxBytes []byte, imageData map[string]string, markerPrefix string) ([]byte, error) {
+// injectImagesToDocx 向 docx 模板字节流中注入图片，直接替换 {key} 占位符。
+func (uc *UseCase) injectImagesToDocx(docxBytes []byte, imageData map[string]ImageValue) ([]byte, error) {
 	zr, err := zip.NewReader(bytes.NewReader(docxBytes), int64(len(docxBytes)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read docx zip: %w", err)
@@ -35,12 +34,15 @@ func injectImagesToDocx(docxBytes []byte, imageData map[string]string, markerPre
 	relsXML := string(files[relsFile])
 	docXML := string(files["word/document.xml"])
 
-	for _, p := range indexedPairs(imageData) {
-		imgBytes, imgExt, err := parseDataURI(p.val)
+	for _, p := range indexedImagePairs(imageData) {
+		// 获取图片字节流（支持 URL 和 base64）
+		imgBytes, err := uc.fetchImageBytes(p.val)
 		if err != nil {
 			return nil, fmt.Errorf("image key %q: %w", p.key, err)
 		}
 
+		// 根据图片内容判断扩展名
+		imgExt := detectImageExtension(imgBytes)
 		mediaName := fmt.Sprintf("image%d.%s", p.idx+1, imgExt)
 		files["word/media/"+mediaName] = imgBytes
 
@@ -51,10 +53,11 @@ func injectImagesToDocx(docxBytes []byte, imageData map[string]string, markerPre
 		)
 		relsXML = strings.Replace(relsXML, "</Relationships>", relEntry+"</Relationships>", 1)
 
-		cx, cy := imageEMU(imgBytes, 1800000)
+		cx, cy := imageEMU(imgBytes, p.val)
 		drawingXML := buildDrawingXML(rId, p.idx+1, cx, cy)
 
-		marker := markerPrefix + p.key + "__"
+		// 直接匹配模板里的 {key} 占位符
+		marker := "{" + p.key + "}"
 		re := regexp.MustCompile(
 			`<w:r\b[^>]*>(?:<w:rPr>[\s\S]*?</w:rPr>)?<w:t[^>]*>` +
 				regexp.QuoteMeta(marker) +
@@ -69,34 +72,67 @@ func injectImagesToDocx(docxBytes []byte, imageData map[string]string, markerPre
 	return repackDocxZip(zr, files)
 }
 
-// parseDataURI 解析 "data:image/png;base64,..." 格式，返回图片字节和扩展名
-func parseDataURI(dataURI string) ([]byte, string, error) {
-	semicolon := strings.Index(dataURI, ";")
-	comma := strings.Index(dataURI, ",")
-	if semicolon == -1 || comma == -1 || comma < semicolon {
-		return nil, "", fmt.Errorf("invalid data URI format")
+// detectImageExtension 根据图片字节流的魔数判断扩展名
+func detectImageExtension(imgBytes []byte) string {
+	if len(imgBytes) < 4 {
+		return "png" // 默认
 	}
-	mimeType := dataURI[5:semicolon]
-	ext := "png"
-	if strings.Contains(mimeType, "jpeg") || strings.Contains(mimeType, "jpg") {
-		ext = "jpg"
+	// PNG: 89 50 4E 47
+	if imgBytes[0] == 0x89 && imgBytes[1] == 0x50 && imgBytes[2] == 0x4E && imgBytes[3] == 0x47 {
+		return "png"
 	}
-	imgBytes, err := base64.StdEncoding.DecodeString(dataURI[comma+1:])
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to decode base64: %w", err)
+	// JPEG: FF D8 FF
+	if imgBytes[0] == 0xFF && imgBytes[1] == 0xD8 && imgBytes[2] == 0xFF {
+		return "jpg"
 	}
-	return imgBytes, ext, nil
+	// GIF: 47 49 46
+	if imgBytes[0] == 0x47 && imgBytes[1] == 0x49 && imgBytes[2] == 0x46 {
+		return "gif"
+	}
+	return "png" // 默认
 }
 
-// imageEMU 解码图片获取实际宽高，按给定目标宽度（EMU）等比缩放返回 cx/cy。
-func imageEMU(imgBytes []byte, defaultCx int64) (int64, int64) {
+// imageEMU 解码图片获取实际宽高，根据 ImageValue 配置计算 EMU 尺寸。
+// - OriginalSize=true: 使用图片原始像素尺寸（按 96dpi 换算）
+// - MaxWidthPx/MaxHeightPx: 限制最大尺寸，等比缩放
+// - 默认：宽度 1800000 EMU（约 4.76cm），等比缩放高度
+func imageEMU(imgBytes []byte, imgVal ImageValue) (int64, int64) {
 	cfg, _, err := image.DecodeConfig(bytes.NewReader(imgBytes))
 	if err != nil || cfg.Width == 0 {
-		return defaultCx, defaultCx / 2
+		return 1800000, 900000 // 默认 4.76cm x 2.38cm
 	}
-	cx := defaultCx
-	cy := cx * int64(cfg.Height) / int64(cfg.Width)
-	return cx, cy
+
+	var targetW, targetH float64
+
+	if imgVal.OriginalSize {
+		// 原始像素尺寸，按 96dpi 换算为 EMU (1 inch = 914400 EMU, 96dpi)
+		targetW = float64(cfg.Width) * 914400 / 96
+		targetH = float64(cfg.Height) * 914400 / 96
+	} else {
+		// 默认宽度 1800000 EMU
+		targetW = 1800000
+		targetH = targetW * float64(cfg.Height) / float64(cfg.Width)
+	}
+
+	// 应用最大尺寸限制
+	if imgVal.MaxWidthPx > 0 {
+		maxW := imgVal.MaxWidthPx * 914400 / 96
+		if targetW > maxW {
+			scale := maxW / targetW
+			targetW = maxW
+			targetH *= scale
+		}
+	}
+	if imgVal.MaxHeightPx > 0 {
+		maxH := imgVal.MaxHeightPx * 914400 / 96
+		if targetH > maxH {
+			scale := maxH / targetH
+			targetH = maxH
+			targetW *= scale
+		}
+	}
+
+	return int64(targetW), int64(targetH)
 }
 
 // buildDrawingXML 构建内联图片的 <wp:inline> XML 片段
@@ -159,25 +195,106 @@ func repackDocxZip(original *zip.Reader, files map[string][]byte) ([]byte, error
 	return buf.Bytes(), nil
 }
 
-// indexedPairs 将 map 转为有稳定顺序的 (index, key, value) 序列
-func indexedPairs(m map[string]string) []struct {
+// indexedImagePairs 将 map[string]ImageValue 转为有稳定顺序的序列
+func indexedImagePairs(m map[string]ImageValue) []struct {
 	idx int
 	key string
-	val string
+	val ImageValue
 } {
-	pairs := make([]struct {
+	result := make([]struct {
 		idx int
 		key string
-		val string
+		val ImageValue
 	}, 0, len(m))
 	i := 0
 	for k, v := range m {
-		pairs = append(pairs, struct {
+		result = append(result, struct {
 			idx int
 			key string
-			val string
+			val ImageValue
 		}{i, k, v})
 		i++
 	}
-	return pairs
+	return result
+}
+
+// injectRichTextToDocx 将富文本占位符 {key} 替换为带格式的 w:r 片段。
+// 支持：加粗、颜色、\n 换行（转为 <w:br/>）
+func injectRichTextToDocx(docxBytes []byte, richData map[string]RichText) ([]byte, error) {
+	zr, err := zip.NewReader(bytes.NewReader(docxBytes), int64(len(docxBytes)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read docx zip: %w", err)
+	}
+
+	files := make(map[string][]byte, len(zr.File))
+	for _, f := range zr.File {
+		rc, err := f.Open()
+		if err != nil {
+			return nil, fmt.Errorf("failed to open zip entry %s: %w", f.Name, err)
+		}
+		var buf bytes.Buffer
+		buf.ReadFrom(rc)
+		rc.Close()
+		files[f.Name] = buf.Bytes()
+	}
+
+	docXML := string(files["word/document.xml"])
+
+	for k, rt := range richData {
+		// 直接匹配模板里的 {key} 占位符
+		marker := "{" + k + "}"
+		re := regexp.MustCompile(
+			`<w:r\b[^>]*>(?:<w:rPr>[\s\S]*?</w:rPr>)?<w:t[^>]*>` +
+				regexp.QuoteMeta(marker) +
+				`</w:t></w:r>`,
+		)
+		replacement := buildRichRunsXML(rt.Runs)
+		docXML = re.ReplaceAllString(docXML, replacement)
+	}
+
+	files["word/document.xml"] = []byte(docXML)
+	return repackDocxZip(zr, files)
+}
+
+// buildRichRunsXML 将 []RichRun 转为 Word XML 片段，\n 转为 <w:br/>
+func buildRichRunsXML(runs []RichRun) string {
+	var sb strings.Builder
+	for _, run := range runs {
+		// 按 \n 拆分，每段之间插入换行
+		parts := strings.Split(run.Text, "\n")
+		for i, part := range parts {
+			if i > 0 {
+				// 换行：单独一个 run 插入 <w:br/>
+				sb.WriteString(`<w:r><w:br/></w:r>`)
+			}
+			if part == "" {
+				continue
+			}
+			sb.WriteString(`<w:r>`)
+			// rPr：加粗 + 颜色
+			if run.Bold || run.Color != "" {
+				sb.WriteString(`<w:rPr>`)
+				if run.Bold {
+					sb.WriteString(`<w:b/>`)
+				}
+				if run.Color != "" {
+					sb.WriteString(`<w:color w:val="` + run.Color + `"/>`)
+				}
+				sb.WriteString(`</w:rPr>`)
+			}
+			sb.WriteString(`<w:t xml:space="preserve">`)
+			sb.WriteString(xmlEscape(part))
+			sb.WriteString(`</w:t></w:r>`)
+		}
+	}
+	return sb.String()
+}
+
+// xmlEscape 转义 XML 特殊字符
+func xmlEscape(s string) string {
+	s = strings.ReplaceAll(s, "&", "&amp;")
+	s = strings.ReplaceAll(s, "<", "&lt;")
+	s = strings.ReplaceAll(s, ">", "&gt;")
+	s = strings.ReplaceAll(s, `"`, "&quot;")
+	return s
 }

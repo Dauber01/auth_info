@@ -74,7 +74,7 @@ func (h *DocumentHandler) GenerateWord(c *gin.Context) {
 		return
 	}
 
-	wordBytes, err := h.uc.GenerateWord(req.GetTemplateName(), structToMap(req.GetData()))
+	wordBytes, err := h.uc.GenerateWord(req.GetTemplateName(), structToWordTemplateData(req.GetData()))
 	if err != nil {
 		status := http.StatusInternalServerError
 		if isNotFoundErr(err) {

@@ -6,33 +6,53 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strings"
 	"text/template"
 
 	"github.com/go-pdf/fpdf"
-	godocx "github.com/lukasjarosch/go-docx"
 )
 
-// isImageValue 判断 data 值是否为图片（base64 格式）
-func isImageValue(v any) bool {
-	s, ok := v.(string)
-	if !ok {
-		return false
-	}
-	return strings.HasPrefix(s, "data:image/")
+// RichRun 富文本中的一段文字，可独立设置样式
+type RichRun struct {
+	Text  string `json:"text"`
+	Bold  bool   `json:"bold,omitempty"`
+	Color string `json:"color,omitempty"` // 十六进制，如 "FF0000"，空表示默认色
+}
+
+// RichText 富文本值，支持多段样式和换行（\n 自动转为换行符）
+type RichText struct {
+	Runs []RichRun `json:"runs"`
+}
+
+// ImageValue 图片值，支持原始尺寸和最大尺寸限制
+type ImageValue struct {
+	ImageURL     string  `json:"image_url"`              // 图片 URL 地址（优先）或 data:image/... base64（兼容）
+	OriginalSize bool    `json:"original_size,omitempty"` // true=使用图片原始像素尺寸（按 96dpi 换算 EMU）
+	MaxWidthPx   float64 `json:"max_width_px,omitempty"`  // 最大宽度（像素），0=不限
+	MaxHeightPx  float64 `json:"max_height_px,omitempty"` // 最大高度（像素），0=不限
+}
+
+// WordTemplateData Word 文档生成的数据结构，明确区分文本和图片
+type WordTemplateData struct {
+	Texts  map[string]RichText   `json:"texts"`  // 文本占位符 -> 富文本内容
+	Images map[string]ImageValue `json:"images"` // 图片占位符 -> 图片数据
 }
 
 // UseCase 处理 PDF 文档生成，无需数据库依赖
 type UseCase struct {
 	templateDir string
 	fontPath    string
+	httpClient  *http.Client
 }
 
 func NewUseCase() *UseCase {
 	return &UseCase{
 		templateDir: "D:\\GoProject\\auth_info\\templates",
 		fontPath:    "D:\\GoProject\\auth_info\\assets\\fonts\\NotoSansSC-Regular.ttf",
+		httpClient:  &http.Client{Timeout: 30 * 1000000000}, // 30秒超时
 	}
 }
 
@@ -242,7 +262,10 @@ func (uc *UseCase) drawImage(pdf *fpdf.Fpdf, sec *templateSection) error {
 }
 
 // GenerateWord 根据 .docx 模板和数据生成 Word 文档，返回字节流。
-func (uc *UseCase) GenerateWord(templateName string, data map[string]any) ([]byte, error) {
+// data.Texts 支持富文本（多段样式、换行、加粗、颜色）
+// data.Images 支持原始尺寸和最大尺寸限制
+// 模板占位符格式：{key}
+func (uc *UseCase) GenerateWord(templateName string, data WordTemplateData) ([]byte, error) {
 	tmplPath := fmt.Sprintf("%s/%s.docx", uc.templateDir, templateName)
 
 	docBytes, err := os.ReadFile(tmplPath)
@@ -253,44 +276,69 @@ func (uc *UseCase) GenerateWord(templateName string, data map[string]any) ([]byt
 		return nil, fmt.Errorf("failed to read template: %w", err)
 	}
 
-	// 分离文本数据和图片数据
-	textData := make(godocx.PlaceholderMap)
-	imageData := make(map[string]string)
-	for k, v := range data {
-		if isImageValue(v) {
-			imageData[k] = v.(string)
-		} else {
-			textData[k] = v
-		}
-	}
+	result := docBytes
 
-	const imgMarkerPrefix = "__IMGPLACEHOLDER_"
-	for k := range imageData {
-		textData[k] = imgMarkerPrefix + k + "__"
-	}
-
-	doc, err := godocx.OpenBytes(docBytes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open docx template: %w", err)
-	}
-	defer doc.Close()
-
-	if err := doc.ReplaceAll(textData); err != nil {
-		return nil, fmt.Errorf("failed to replace text placeholders: %w", err)
-	}
-
-	var buf bytes.Buffer
-	if err := doc.Write(&buf); err != nil {
-		return nil, fmt.Errorf("failed to write docx after text replace: %w", err)
-	}
-
-	if len(imageData) > 0 {
-		result, err := injectImagesToDocx(buf.Bytes(), imageData, imgMarkerPrefix)
+	// 注入富文本（直接替换模板里的 {key}）
+	if len(data.Texts) > 0 {
+		result, err = injectRichTextToDocx(result, data.Texts)
 		if err != nil {
 			return nil, err
 		}
-		return result, nil
 	}
 
-	return buf.Bytes(), nil
+	// 注入图片（直接替换模板里的 {key}）
+	if len(data.Images) > 0 {
+		result, err = uc.injectImagesToDocx(result, data.Images)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
+}
+
+// fetchImageBytes 从 ImageValue 获取图片字节流。
+// 支持两种格式：
+//   - URL: http(s)://... 通过 HTTP GET 获取
+//   - Base64: data:image/...;base64,... 直接解码（兼容旧格式）
+func (uc *UseCase) fetchImageBytes(imgVal ImageValue) ([]byte, error) {
+	src := imgVal.ImageURL
+	if src == "" {
+		return nil, fmt.Errorf("image_url is empty")
+	}
+
+	// 判断是 URL 还是 base64
+	if strings.HasPrefix(src, "http://") || strings.HasPrefix(src, "https://") {
+		// HTTP 获取
+		resp, err := uc.httpClient.Get(src)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch image from URL: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("failed to fetch image: HTTP %d", resp.StatusCode)
+		}
+
+		imgBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read image response: %w", err)
+		}
+		return imgBytes, nil
+	}
+
+	// Base64 解码（兼容旧格式）
+	if strings.HasPrefix(src, "data:image/") {
+		comma := strings.Index(src, ",")
+		if comma == -1 {
+			return nil, fmt.Errorf("invalid data URI format")
+		}
+		imgBytes, err := base64.StdEncoding.DecodeString(src[comma+1:])
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode base64: %w", err)
+		}
+		return imgBytes, nil
+	}
+
+	return nil, fmt.Errorf("unsupported image format: must be URL or data URI")
 }

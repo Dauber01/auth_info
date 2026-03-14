@@ -13,6 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	apipb "auth_info/api/gen/api/proto"
+	bizdoc "auth_info/internal/biz/document"
 	"auth_info/internal/data"
 )
 
@@ -40,6 +41,84 @@ func structToMap(payload *structpb.Struct) map[string]any {
 		return nil
 	}
 	return payload.AsMap()
+}
+
+// structToWordTemplateData 将 protobuf Struct 转换为 WordTemplateData。
+// 期望的 JSON 结构：
+//
+//	{
+//	  "texts":  { "key": { "runs": [{"text":"...","bold":true,"color":"FF0000"}] } },
+//	  "images": { "key": { "image_url":"https://example.com/image.png","original_size":true,"max_width_px":400 } }
+//	}
+func structToWordTemplateData(payload *structpb.Struct) bizdoc.WordTemplateData {
+	result := bizdoc.WordTemplateData{
+		Texts:  make(map[string]bizdoc.RichText),
+		Images: make(map[string]bizdoc.ImageValue),
+	}
+	if payload == nil {
+		return result
+	}
+	m := payload.AsMap()
+
+	// 解析 texts
+	if textsRaw, ok := m["texts"].(map[string]any); ok {
+		for k, v := range textsRaw {
+			vm, ok := v.(map[string]any)
+			if !ok {
+				// 纯字符串简写：{"texts":{"key":"hello"}}
+				if s, ok := v.(string); ok {
+					result.Texts[k] = bizdoc.RichText{Runs: []bizdoc.RichRun{{Text: s}}}
+				}
+				continue
+			}
+			runsRaw, _ := vm["runs"].([]any)
+			rt := bizdoc.RichText{Runs: make([]bizdoc.RichRun, 0, len(runsRaw))}
+			for _, r := range runsRaw {
+				rm, ok := r.(map[string]any)
+				if !ok {
+					continue
+				}
+				run := bizdoc.RichRun{}
+				if t, ok := rm["text"].(string); ok {
+					run.Text = t
+				}
+				if b, ok := rm["bold"].(bool); ok {
+					run.Bold = b
+				}
+				if c, ok := rm["color"].(string); ok {
+					run.Color = c
+				}
+				rt.Runs = append(rt.Runs, run)
+			}
+			result.Texts[k] = rt
+		}
+	}
+
+	// 解析 images
+	if imagesRaw, ok := m["images"].(map[string]any); ok {
+		for k, v := range imagesRaw {
+			vm, ok := v.(map[string]any)
+			if !ok {
+				continue
+			}
+			iv := bizdoc.ImageValue{}
+			if url, ok := vm["image_url"].(string); ok {
+				iv.ImageURL = url
+			}
+			if b, ok := vm["original_size"].(bool); ok {
+				iv.OriginalSize = b
+			}
+			if w, ok := vm["max_width_px"].(float64); ok {
+				iv.MaxWidthPx = w
+			}
+			if h, ok := vm["max_height_px"].(float64); ok {
+				iv.MaxHeightPx = h
+			}
+			result.Images[k] = iv
+		}
+	}
+
+	return result
 }
 
 func dictTypeToProto(model data.DictType) *apipb.DictType {
