@@ -51,6 +51,8 @@ type UseCase struct {
 	httpClient  *http.Client
 }
 
+const maxImageBytes = 10 * 1024 * 1024
+
 func NewUseCase() *UseCase {
 	return &UseCase{
 		templateDir: "D:\\GoProject\\auth_info\\templates",
@@ -322,7 +324,6 @@ func (uc *UseCase) fetchImageBytes(ctx context.Context, imgVal ImageValue) ([]by
 
 	// 判断是 URL 还是 base64
 	if strings.HasPrefix(src, "http://") || strings.HasPrefix(src, "https://") {
-		// HTTP 获取
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, src, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build image request: %w", err)
@@ -336,10 +337,16 @@ func (uc *UseCase) fetchImageBytes(ctx context.Context, imgVal ImageValue) ([]by
 		if resp.StatusCode != http.StatusOK {
 			return nil, fmt.Errorf("failed to fetch image: HTTP %d", resp.StatusCode)
 		}
+		if resp.ContentLength > maxImageBytes {
+			return nil, apperr.New(apperr.CodeInvalidArgument, "image size exceeds 10MB limit")
+		}
 
-		imgBytes, err := io.ReadAll(resp.Body)
+		imgBytes, err := io.ReadAll(io.LimitReader(resp.Body, maxImageBytes+1))
 		if err != nil {
 			return nil, fmt.Errorf("failed to read image response: %w", err)
+		}
+		if int64(len(imgBytes)) > maxImageBytes {
+			return nil, apperr.New(apperr.CodeInvalidArgument, "image size exceeds 10MB limit")
 		}
 		return imgBytes, nil
 	}
@@ -350,9 +357,16 @@ func (uc *UseCase) fetchImageBytes(ctx context.Context, imgVal ImageValue) ([]by
 		if comma == -1 {
 			return nil, fmt.Errorf("invalid data URI format")
 		}
-		imgBytes, err := base64.StdEncoding.DecodeString(src[comma+1:])
+		encoded := src[comma+1:]
+		if int64(base64.StdEncoding.DecodedLen(len(encoded))) > maxImageBytes {
+			return nil, apperr.New(apperr.CodeInvalidArgument, "image size exceeds 10MB limit")
+		}
+		imgBytes, err := base64.StdEncoding.DecodeString(encoded)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode base64: %w", err)
+		}
+		if int64(len(imgBytes)) > maxImageBytes {
+			return nil, apperr.New(apperr.CodeInvalidArgument, "image size exceeds 10MB limit")
 		}
 		return imgBytes, nil
 	}

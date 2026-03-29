@@ -27,12 +27,7 @@ func NewDocumentHandler(uc *bizdoc.UseCase) *DocumentHandler {
 // @Router   /document/generate-pdf [post]
 func (h *DocumentHandler) GeneratePDF(c *gin.Context) {
 	var req apipb.GeneratePDFRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		badRequest(c, err)
-		return
-	}
-	if err := validateProtoRules(&req); err != nil {
-		writeError(c, err)
+	if !bindAndValidateJSON(c, &req) {
 		return
 	}
 
@@ -55,12 +50,7 @@ func (h *DocumentHandler) GeneratePDF(c *gin.Context) {
 // @Router   /document/generate-word [post]
 func (h *DocumentHandler) GenerateWord(c *gin.Context) {
 	var req apipb.GenerateWordRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		badRequest(c, err)
-		return
-	}
-	if err := validateProtoRules(&req); err != nil {
-		writeError(c, err)
+	if !bindAndValidateJSON(c, &req) {
 		return
 	}
 

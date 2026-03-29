@@ -9,6 +9,7 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -207,14 +208,23 @@ func indexedImagePairs(m map[string]ImageValue) []struct {
 		key string
 		val ImageValue
 	}, 0, len(m))
-	i := 0
-	for k, v := range m {
+
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for i, k := range keys {
 		result = append(result, struct {
 			idx int
 			key string
 			val ImageValue
-		}{i, k, v})
-		i++
+		}{
+			idx: i,
+			key: k,
+			val: m[k],
+		})
 	}
 	return result
 }

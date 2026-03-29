@@ -1,8 +1,13 @@
 package app
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net"
+	"net/http"
+	"sync"
+	"time"
 
 	"github.com/casbin/casbin/v3"
 	"github.com/gin-gonic/gin"
@@ -24,9 +29,14 @@ import (
 type App struct {
 	engine     *gin.Engine
 	grpcServer *grpc.Server
+	httpServer *http.Server
 	config     *config.Config
 	helloSvc   *service.HelloService
+	stopCh     chan struct{}
+	stopOnce   sync.Once
 }
+
+const grpcGracefulStopTimeout = 5 * time.Second
 
 // NewApp Wire Provider
 func NewApp(
@@ -75,32 +85,80 @@ func NewApp(
 		grpcServer: grpcServer,
 		config:     cfg,
 		helloSvc:   helloSvc,
+		stopCh:     make(chan struct{}),
 	}, nil
 }
 
 func (a *App) Run() error {
+	errCh := make(chan error, 2)
+
+	grpcAddr := fmt.Sprintf(":%d", a.config.Server.Port+1000)
+	grpcListener, err := net.Listen("tcp", grpcAddr)
+	if err != nil {
+		return fmt.Errorf("listen gRPC: %w", err)
+	}
+
+	httpAddr := fmt.Sprintf(":%d", a.config.Server.Port)
+	a.httpServer = &http.Server{
+		Addr:    httpAddr,
+		Handler: a.engine,
+	}
+
 	go func() {
-		grpcAddr := fmt.Sprintf(":%d", a.config.Server.Port+1000)
-		listener, err := net.Listen("tcp", grpcAddr)
-		if err != nil {
-			logger.GetLogger().Error("Failed to listen for gRPC", zap.Error(err))
-			return
-		}
 		logger.GetLogger().Info("gRPC server starting", zap.String("addr", grpcAddr))
-		if err := a.grpcServer.Serve(listener); err != nil {
-			logger.GetLogger().Error("gRPC server error", zap.Error(err))
+		if serveErr := a.grpcServer.Serve(grpcListener); serveErr != nil && !errors.Is(serveErr, grpc.ErrServerStopped) {
+			errCh <- fmt.Errorf("gRPC server error: %w", serveErr)
 		}
 	}()
 
-	addr := fmt.Sprintf(":%d", a.config.Server.Port)
-	logger.GetLogger().Info("Server starting", zap.String("addr", addr))
-	return a.engine.Run(addr)
+	go func() {
+		logger.GetLogger().Info("HTTP server starting", zap.String("addr", httpAddr))
+		if serveErr := a.httpServer.ListenAndServe(); serveErr != nil && !errors.Is(serveErr, http.ErrServerClosed) {
+			errCh <- fmt.Errorf("http server error: %w", serveErr)
+		}
+	}()
+
+	select {
+	case runErr := <-errCh:
+		_ = a.Stop()
+		return runErr
+	case <-a.stopCh:
+		return nil
+	}
 }
 
 func (a *App) Stop() error {
-	logger.GetLogger().Info("Server stopping")
-	if a.grpcServer != nil {
-		a.grpcServer.GracefulStop()
+	var stopErr error
+
+	a.stopOnce.Do(func() {
+		close(a.stopCh)
+
+		if a.httpServer != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := a.httpServer.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				stopErr = err
+			}
+		}
+
+		if a.grpcServer != nil {
+			grpcStopped := make(chan struct{})
+			go func() {
+				a.grpcServer.GracefulStop()
+				close(grpcStopped)
+			}()
+
+			select {
+			case <-grpcStopped:
+			case <-time.After(grpcGracefulStopTimeout):
+				logger.GetLogger().Warn("gRPC graceful stop timeout reached, forcing stop")
+				a.grpcServer.Stop()
+			}
+		}
+	})
+
+	if err := logger.Sync(); stopErr == nil {
+		stopErr = err
 	}
-	return logger.Sync()
+	return stopErr
 }

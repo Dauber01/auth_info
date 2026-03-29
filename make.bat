@@ -9,6 +9,8 @@ set API_DIR=api
 set PROTO_DIR=%API_DIR%\proto
 set GEN_DIR=%API_DIR%\gen
 set MAIN_GO=cmd\main\main.go
+set MIGRATE_GO=cmd\migrate\main.go
+set SEED_GO=cmd\seed\main.go
 set OUTPUT=%BIN_DIR%\%PROJECT_NAME%.exe
 set CONFIG_DIR=.\config
 
@@ -18,6 +20,8 @@ if "%1"=="install-tools" goto install_tools
 if "%1"=="proto" goto proto
 if "%1"=="wire" goto wire
 if "%1"=="mod-tidy" goto mod_tidy
+if "%1"=="migrate" goto migrate
+if "%1"=="seed" goto seed
 if "%1"=="build" goto build
 if "%1"=="run" goto run
 if "%1"=="clean" goto clean
@@ -36,6 +40,8 @@ echo   make install-tools  - Install protoc-gen-go tools
 echo   make proto          - Generate protobuf Go code
 echo   make wire           - Generate Wire dependency injection code
 echo   make mod-tidy       - Update dependencies
+echo   make migrate        - Run database migrations
+echo   make seed           - Seed default casbin policies
 echo   make build          - Build project
 echo   make run            - Generate code and run project
 echo   make clean          - Clean generated files
@@ -74,6 +80,18 @@ goto end
 echo Updating dependencies...
 go mod tidy
 echo Dependencies updated
+goto end
+
+:migrate
+echo Running migrations...
+go run %MIGRATE_GO% -config %CONFIG_DIR%
+echo Migrations complete
+goto end
+
+:seed
+echo Seeding default policies...
+go run %SEED_GO% -config %CONFIG_DIR%
+echo Policies seeded
 goto end
 
 :build

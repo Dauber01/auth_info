@@ -10,7 +10,7 @@ import (
 	bizdict "auth_info/internal/biz/dict"
 )
 
-// DictHandler 字典配置 HTTP 处理器
+// DictHandler handles dictionary HTTP APIs.
 type DictHandler struct {
 	uc *bizdict.UseCase
 }
@@ -21,7 +21,7 @@ func NewDictHandler(uc *bizdict.UseCase) *DictHandler {
 }
 
 // ListDictTypes
-// @Summary  获取字典类型列表
+// @Summary  List dictionary types
 // @Tags     Dict
 // @Produce  json
 // @Security BearerAuth
@@ -41,7 +41,7 @@ func (h *DictHandler) ListDictTypes(c *gin.Context) {
 }
 
 // CreateDictType
-// @Summary  创建字典类型
+// @Summary  Create dictionary type
 // @Tags     Dict
 // @Accept   json
 // @Produce  json
@@ -49,12 +49,7 @@ func (h *DictHandler) ListDictTypes(c *gin.Context) {
 // @Router   /dict/types [post]
 func (h *DictHandler) CreateDictType(c *gin.Context) {
 	var req apipb.CreateDictTypeRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		badRequest(c, err)
-		return
-	}
-	if err := validateProtoRules(&req); err != nil {
-		writeError(c, err)
+	if !bindAndValidateJSON(c, &req) {
 		return
 	}
 
@@ -67,27 +62,17 @@ func (h *DictHandler) CreateDictType(c *gin.Context) {
 }
 
 // UpdateDictType
-// @Summary  更新字典类型
+// @Summary  Update dictionary type
 // @Tags     Dict
 // @Accept   json
 // @Produce  json
 // @Security BearerAuth
 // @Router   /dict/types/{id} [put]
 func (h *DictHandler) UpdateDictType(c *gin.Context) {
-	id, err := parseUintParam(c, "id")
-	if err != nil {
-		badRequest(c, err)
-		return
-	}
-
 	var req apipb.UpdateDictTypeRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		badRequest(c, err)
-		return
-	}
-	req.Id = id
-	if err := validateProtoRules(&req); err != nil {
-		writeError(c, err)
+	if !bindPathIDAndValidateJSON(c, "id", &req, func(id uint64) {
+		req.Id = id
+	}) {
 		return
 	}
 
@@ -100,21 +85,16 @@ func (h *DictHandler) UpdateDictType(c *gin.Context) {
 }
 
 // DeleteDictType
-// @Summary  删除字典类型
+// @Summary  Delete dictionary type
 // @Tags     Dict
 // @Produce  json
 // @Security BearerAuth
 // @Router   /dict/types/{id} [delete]
 func (h *DictHandler) DeleteDictType(c *gin.Context) {
 	req := apipb.DeleteDictTypeRequest{}
-	id, err := parseUintParam(c, "id")
-	if err != nil {
-		badRequest(c, err)
-		return
-	}
-	req.Id = id
-	if err := validateProtoRules(&req); err != nil {
-		writeError(c, err)
+	if !validatePathIDRequest(c, "id", &req, func(id uint64) {
+		req.Id = id
+	}) {
 		return
 	}
 
@@ -127,15 +107,14 @@ func (h *DictHandler) DeleteDictType(c *gin.Context) {
 }
 
 // ListDictItems
-// @Summary  根据类型编码获取字典数据列表
+// @Summary  List dictionary items by type code
 // @Tags     Dict
 // @Produce  json
 // @Security BearerAuth
 // @Router   /dict/items [get]
 func (h *DictHandler) ListDictItems(c *gin.Context) {
 	req := apipb.ListDictItemsRequest{TypeCode: strings.TrimSpace(c.Query("type_code"))}
-	if err := validateProtoRules(&req); err != nil {
-		writeError(c, err)
+	if !validateProtoMessage(c, &req) {
 		return
 	}
 
@@ -153,7 +132,7 @@ func (h *DictHandler) ListDictItems(c *gin.Context) {
 }
 
 // CreateDictItem
-// @Summary  创建字典数据
+// @Summary  Create dictionary item
 // @Tags     Dict
 // @Accept   json
 // @Produce  json
@@ -161,12 +140,7 @@ func (h *DictHandler) ListDictItems(c *gin.Context) {
 // @Router   /dict/items [post]
 func (h *DictHandler) CreateDictItem(c *gin.Context) {
 	var req apipb.CreateDictItemRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		badRequest(c, err)
-		return
-	}
-	if err := validateProtoRules(&req); err != nil {
-		writeError(c, err)
+	if !bindAndValidateJSON(c, &req) {
 		return
 	}
 
@@ -179,27 +153,17 @@ func (h *DictHandler) CreateDictItem(c *gin.Context) {
 }
 
 // UpdateDictItem
-// @Summary  更新字典数据
+// @Summary  Update dictionary item
 // @Tags     Dict
 // @Accept   json
 // @Produce  json
 // @Security BearerAuth
 // @Router   /dict/items/{id} [put]
 func (h *DictHandler) UpdateDictItem(c *gin.Context) {
-	id, err := parseUintParam(c, "id")
-	if err != nil {
-		badRequest(c, err)
-		return
-	}
-
 	var req apipb.UpdateDictItemRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		badRequest(c, err)
-		return
-	}
-	req.Id = id
-	if err := validateProtoRules(&req); err != nil {
-		writeError(c, err)
+	if !bindPathIDAndValidateJSON(c, "id", &req, func(id uint64) {
+		req.Id = id
+	}) {
 		return
 	}
 
@@ -212,21 +176,16 @@ func (h *DictHandler) UpdateDictItem(c *gin.Context) {
 }
 
 // DeleteDictItem
-// @Summary  删除字典数据
+// @Summary  Delete dictionary item
 // @Tags     Dict
 // @Produce  json
 // @Security BearerAuth
 // @Router   /dict/items/{id} [delete]
 func (h *DictHandler) DeleteDictItem(c *gin.Context) {
 	req := apipb.DeleteDictItemRequest{}
-	id, err := parseUintParam(c, "id")
-	if err != nil {
-		badRequest(c, err)
-		return
-	}
-	req.Id = id
-	if err := validateProtoRules(&req); err != nil {
-		writeError(c, err)
+	if !validatePathIDRequest(c, "id", &req, func(id uint64) {
+		req.Id = id
+	}) {
 		return
 	}
 

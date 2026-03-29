@@ -1,4 +1,4 @@
-.PHONY: help proto wire build run clean install-tools
+.PHONY: help proto wire build run clean install-tools migrate seed
 
 # 变量定义
 PROJECT_NAME := auth_info
@@ -7,6 +7,8 @@ API_DIR := api
 PROTO_DIR := $(API_DIR)/proto
 GEN_DIR := $(API_DIR)/gen
 MAIN_GO := cmd/main/main.go
+MIGRATE_GO := cmd/migrate/main.go
+SEED_GO := cmd/seed/main.go
 OUTPUT := $(BIN_DIR)/$(PROJECT_NAME)
 CONFIG_DIR := ./config
 
@@ -54,6 +56,18 @@ mod-tidy:
 	@echo "$(BLUE)Running go mod tidy...$(NC)"
 	@go mod tidy
 	@echo "$(GREEN)✓ Dependencies updated$(NC)"
+
+## migrate: 执行数据库迁移（独立命令）
+migrate: mod-tidy
+	@echo "$(BLUE)Running migrations...$(NC)"
+	@go run $(MIGRATE_GO) -config $(CONFIG_DIR)
+	@echo "$(GREEN)✓ Migrations complete$(NC)"
+
+## seed: 初始化默认权限策略（独立命令）
+seed: mod-tidy
+	@echo "$(BLUE)Seeding default policies...$(NC)"
+	@go run $(SEED_GO) -config $(CONFIG_DIR)
+	@echo "$(GREEN)✓ Policies seeded$(NC)"
 
 ## build: 编译项目
 build: mod-tidy proto wire

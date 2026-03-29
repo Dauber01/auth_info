@@ -27,12 +27,7 @@ func NewAuthHandler(uc *bizauth.UseCase) *AuthHandler {
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req apipb.RegisterRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		badRequest(c, err)
-		return
-	}
-	if err := validateProtoRules(&req); err != nil {
-		writeError(c, err)
+	if !bindAndValidateJSON(c, &req) {
 		return
 	}
 
@@ -52,12 +47,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Router /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req apipb.LoginRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		badRequest(c, err)
-		return
-	}
-	if err := validateProtoRules(&req); err != nil {
-		writeError(c, err)
+	if !bindAndValidateJSON(c, &req) {
 		return
 	}
 

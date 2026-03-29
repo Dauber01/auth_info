@@ -27,7 +27,59 @@ func writeError(c *gin.Context, err error) {
 	if err == nil {
 		return
 	}
-	writeOperationReply(c, apperr.HTTPStatus(err), apperr.Message(err))
+	_ = c.Error(err)
+	c.Abort()
+}
+
+func bindJSON(c *gin.Context, req any) bool {
+	if err := c.ShouldBindJSON(req); err != nil {
+		badRequest(c, err)
+		return false
+	}
+	return true
+}
+
+func validateProtoMessage(c *gin.Context, msg proto.Message) bool {
+	if err := validateProtoRules(msg); err != nil {
+		writeError(c, err)
+		return false
+	}
+	return true
+}
+
+func bindAndValidateJSON(c *gin.Context, msg proto.Message) bool {
+	if !bindJSON(c, msg) {
+		return false
+	}
+	if !validateProtoMessage(c, msg) {
+		return false
+	}
+	return true
+}
+
+func bindPathIDAndValidateJSON(c *gin.Context, param string, msg proto.Message, assignID func(uint64)) bool {
+	id, err := parseUintParam(c, param)
+	if err != nil {
+		badRequest(c, err)
+		return false
+	}
+
+	if !bindJSON(c, msg) {
+		return false
+	}
+	assignID(id)
+	return validateProtoMessage(c, msg)
+}
+
+func validatePathIDRequest(c *gin.Context, param string, msg proto.Message, assignID func(uint64)) bool {
+	id, err := parseUintParam(c, param)
+	if err != nil {
+		badRequest(c, err)
+		return false
+	}
+
+	assignID(id)
+	return validateProtoMessage(c, msg)
 }
 
 func parseUintParam(c *gin.Context, key string) (uint64, error) {

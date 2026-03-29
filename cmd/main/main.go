@@ -22,36 +22,39 @@ import (
 )
 
 func main() {
-	// 定义配置文件路径
 	configPath := flag.String("config", "./config", "配置文件路径")
 	flag.Parse()
 
-	// 加载配置
 	cfg, err := config.LoadConfig(*configPath)
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// 初始化应用（由 Wire 完成依赖注入）
 	application, err := app.InitializeApp(cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize app: %v", err)
 	}
 
-	// 创建通道用于优雅关闭
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	// 启动服务
+	runErrCh := make(chan error, 1)
 	go func() {
-		if err := application.Run(); err != nil {
-			log.Fatalf("Server error: %v", err)
-		}
+		runErrCh <- application.Run()
 	}()
 
-	// 等待关闭信号
-	<-sigChan
-	if err := application.Stop(); err != nil {
-		log.Fatalf("Server stop error: %v", err)
+	select {
+	case runErr := <-runErrCh:
+		if runErr != nil {
+			log.Fatalf("Server error: %v", runErr)
+		}
+	case sig := <-sigChan:
+		log.Printf("Received signal %s, shutting down...", sig)
+		if err := application.Stop(); err != nil {
+			log.Fatalf("Server stop error: %v", err)
+		}
+		if runErr := <-runErrCh; runErr != nil {
+			log.Fatalf("Server error during shutdown: %v", runErr)
+		}
 	}
 }
