@@ -18,32 +18,6 @@ import (
 	"auth_info/internal/apperr"
 )
 
-// RichRun 富文本中的一段文字，可独立设置样式
-type RichRun struct {
-	Text  string `json:"text"`
-	Bold  bool   `json:"bold,omitempty"`
-	Color string `json:"color,omitempty"` // 十六进制，如 "FF0000"，空表示默认色
-}
-
-// RichText 富文本值，支持多段样式和换行（\n 自动转为换行符）
-type RichText struct {
-	Runs []RichRun `json:"runs"`
-}
-
-// ImageValue 图片值，支持原始尺寸和最大尺寸限制
-type ImageValue struct {
-	ImageURL     string  `json:"image_url"`               // 图片 URL 地址（优先）或 data:image/... base64（兼容）
-	OriginalSize bool    `json:"original_size,omitempty"` // true=使用图片原始像素尺寸（按 96dpi 换算 EMU）
-	MaxWidthPx   float64 `json:"max_width_px,omitempty"`  // 最大宽度（像素），0=不限
-	MaxHeightPx  float64 `json:"max_height_px,omitempty"` // 最大高度（像素），0=不限
-}
-
-// WordTemplateData Word 文档生成的数据结构，明确区分文本和图片
-type WordTemplateData struct {
-	Texts  map[string]RichText   `json:"texts"`  // 文本占位符 -> 富文本内容
-	Images map[string]ImageValue `json:"images"` // 图片占位符 -> 图片数据
-}
-
 // UseCase 处理 PDF 文档生成，无需数据库依赖
 type UseCase struct {
 	templateDir string

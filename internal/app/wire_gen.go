@@ -14,32 +14,48 @@ import (
 	"auth_info/internal/config"
 	"auth_info/internal/data"
 	"auth_info/internal/handler"
+	"auth_info/internal/logger"
 	"auth_info/internal/service"
 )
 
 // Injectors from wire.go:
 
 func InitializeApp(cfg *config.Config) (*App, error) {
-	db, err := data.NewDB(cfg)
+	log, err := logger.NewLogger(cfg)
 	if err != nil {
 		return nil, err
 	}
-	enforcer, err := data.NewEnforcer(db, cfg)
+	db, err := data.NewDB(cfg, log)
 	if err != nil {
 		return nil, err
 	}
-	userRepository := data.NewUserRepository(db)
-	dictRepository := data.NewDictRepository(db)
-	authUseCase := bizauth.NewUseCase(userRepository, cfg)
-	helloUseCase := bizhello.NewUseCase()
-	dictUseCase := bizdict.NewUseCase(dictRepository)
+	enforcer, err := data.NewEnforcer(db, cfg, log)
+	if err != nil {
+		return nil, err
+	}
+	userRepo := data.NewUserRepository(db)
+	var userRepository bizauth.UserRepository = userRepo
+	dictRepo := data.NewDictRepository(db)
+	var dictRepository bizdict.DictRepository = dictRepo
+	authUseCase := bizauth.NewUseCase(userRepository, cfg, log)
+	helloUseCase := bizhello.NewUseCase(log)
+	dictUseCase := bizdict.NewUseCase(dictRepository, log)
 	documentUseCase := bizdoc.NewUseCase()
 	helloHandler := handler.NewHelloHandler(helloUseCase)
 	authHandler := handler.NewAuthHandler(authUseCase)
 	dictHandler := handler.NewDictHandler(dictUseCase)
 	documentHandler := handler.NewDocumentHandler(documentUseCase)
 	helloService := service.NewHelloService(helloUseCase)
-	application, err := NewApp(cfg, authUseCase, enforcer, helloHandler, authHandler, helloService, dictHandler, documentHandler)
+	appDeps := AppDeps{
+		AuthUC:          authUseCase,
+		Enforcer:        enforcer,
+		HelloHandler:    helloHandler,
+		AuthHandler:     authHandler,
+		HelloSvc:        helloService,
+		DictHandler:     dictHandler,
+		DocumentHandler: documentHandler,
+	}
+	application, err := NewApp(cfg, log, appDeps)
 	if err != nil {
 		return nil, err
 	}

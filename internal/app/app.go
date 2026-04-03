@@ -32,8 +32,20 @@ type App struct {
 	httpServer *http.Server
 	config     *config.Config
 	helloSvc   *service.HelloService
+	logger     *zap.Logger
 	stopCh     chan struct{}
 	stopOnce   sync.Once
+}
+
+// AppDeps 收拢 NewApp 所需的所有可选依赖，便于后续扩展而不污染参数列表
+type AppDeps struct {
+	AuthUC          *bizauth.UseCase
+	Enforcer        *casbin.Enforcer
+	HelloHandler    *handler.HelloHandler
+	AuthHandler     *handler.AuthHandler
+	HelloSvc        *service.HelloService
+	DictHandler     *handler.DictHandler
+	DocumentHandler *handler.DocumentHandler
 }
 
 const grpcGracefulStopTimeout = 5 * time.Second
@@ -41,50 +53,42 @@ const grpcGracefulStopTimeout = 5 * time.Second
 // NewApp Wire Provider
 func NewApp(
 	cfg *config.Config,
-	authUC *bizauth.UseCase,
-	enforcer *casbin.Enforcer,
-	helloHandler *handler.HelloHandler,
-	authHandler *handler.AuthHandler,
-	helloSvc *service.HelloService,
-	dictHandler *handler.DictHandler,
-	documentHandler *handler.DocumentHandler,
+	log *zap.Logger,
+	deps AppDeps,
 ) (*App, error) {
-	if err := logger.InitLogger(cfg.Log.Level); err != nil {
-		return nil, err
-	}
-
 	gin.SetMode(cfg.Server.Mode)
 	engine := gin.New()
 	engine.Use(gin.Logger())
 	engine.Use(gin.Recovery())
-	engine.Use(middleware.ErrorHandler())
+	engine.Use(middleware.ErrorHandler(log))
 
 	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	api := engine.Group("/api/v1")
 	{
 		// Public routes (no auth)
-		router.RegisterAuthRoutes(api, authHandler)
+		router.RegisterAuthRoutes(api, deps.AuthHandler)
 
 		// Protected routes (JWT + Casbin)
 		protected := api.Group("")
-		protected.Use(middleware.JWTAuth(authUC))
-		protected.Use(middleware.CasbinAuth(enforcer))
+		protected.Use(middleware.JWTAuth(deps.AuthUC))
+		protected.Use(middleware.CasbinAuth(deps.Enforcer))
 		{
-			router.RegisterHelloRoutes(protected, helloHandler)
-			router.RegisterDictRoutes(protected, dictHandler)
-			router.RegisterDocumentRoutes(protected, documentHandler)
+			router.RegisterHelloRoutes(protected, deps.HelloHandler)
+			router.RegisterDictRoutes(protected, deps.DictHandler)
+			router.RegisterDocumentRoutes(protected, deps.DocumentHandler)
 		}
 	}
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(validation.UnaryServerInterceptor()))
-	service.RegisterGRPCServices(grpcServer, helloSvc)
+	service.RegisterGRPCServices(grpcServer, deps.HelloSvc)
 
 	return &App{
 		engine:     engine,
 		grpcServer: grpcServer,
 		config:     cfg,
-		helloSvc:   helloSvc,
+		helloSvc:   deps.HelloSvc,
+		logger:     log,
 		stopCh:     make(chan struct{}),
 	}, nil
 }
@@ -105,14 +109,14 @@ func (a *App) Run() error {
 	}
 
 	go func() {
-		logger.GetLogger().Info("gRPC server starting", zap.String("addr", grpcAddr))
+		a.logger.Info("gRPC server starting", zap.String("addr", grpcAddr))
 		if serveErr := a.grpcServer.Serve(grpcListener); serveErr != nil && !errors.Is(serveErr, grpc.ErrServerStopped) {
 			errCh <- fmt.Errorf("gRPC server error: %w", serveErr)
 		}
 	}()
 
 	go func() {
-		logger.GetLogger().Info("HTTP server starting", zap.String("addr", httpAddr))
+		a.logger.Info("HTTP server starting", zap.String("addr", httpAddr))
 		if serveErr := a.httpServer.ListenAndServe(); serveErr != nil && !errors.Is(serveErr, http.ErrServerClosed) {
 			errCh <- fmt.Errorf("http server error: %w", serveErr)
 		}
@@ -151,7 +155,7 @@ func (a *App) Stop() error {
 			select {
 			case <-grpcStopped:
 			case <-time.After(grpcGracefulStopTimeout):
-				logger.GetLogger().Warn("gRPC graceful stop timeout reached, forcing stop")
+				a.logger.Warn("gRPC graceful stop timeout reached, forcing stop")
 				a.grpcServer.Stop()
 			}
 		}

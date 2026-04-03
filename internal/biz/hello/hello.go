@@ -4,16 +4,16 @@ import (
 	"context"
 
 	"go.uber.org/zap"
-
-	"auth_info/internal/logger"
 )
 
 // UseCase hello 业务逻辑
-type UseCase struct{}
+type UseCase struct {
+	logger *zap.Logger
+}
 
 // NewUseCase Wire Provider
-func NewUseCase() *UseCase {
-	return &UseCase{}
+func NewUseCase(logger *zap.Logger) *UseCase {
+	return &UseCase{logger: logger}
 }
 
 // SayHello 处理 hello world 核心业务，name 为空时默认 "World"
@@ -23,6 +23,6 @@ func (uc *UseCase) SayHello(ctx context.Context, name string) string {
 		name = "World"
 	}
 	msg := "Hello, " + name + "!"
-	logger.GetLogger().Info("SayHello", zap.String("name", name), zap.String("msg", msg))
+	uc.logger.Info("SayHello", zap.String("name", name), zap.String("msg", msg))
 	return msg
 }

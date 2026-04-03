@@ -12,7 +12,6 @@ import (
 	"auth_info/internal/apperr"
 	"auth_info/internal/config"
 	"auth_info/internal/data"
-	"auth_info/internal/logger"
 )
 
 // Claims JWT 自定义声明
@@ -25,13 +24,14 @@ type Claims struct {
 
 // UseCase 鉴权业务逻辑
 type UseCase struct {
-	users data.UserRepository
-	cfg   *config.Config
+	users  UserRepository
+	cfg    *config.Config
+	logger *zap.Logger
 }
 
 // NewUseCase Wire Provider
-func NewUseCase(users data.UserRepository, cfg *config.Config) *UseCase {
-	return &UseCase{users: users, cfg: cfg}
+func NewUseCase(users UserRepository, cfg *config.Config, logger *zap.Logger) *UseCase {
+	return &UseCase{users: users, cfg: cfg, logger: logger}
 }
 
 // Register 注册新用户（bcrypt 加密密码）
@@ -58,7 +58,7 @@ func (uc *UseCase) Register(ctx context.Context, username, password string) erro
 		return apperr.Wrap(apperr.CodeInternal, "failed to create user", err)
 	}
 
-	logger.GetLogger().Info("user registered", zap.String("username", username))
+	uc.logger.Info("user registered", zap.String("username", username))
 	return nil
 }
 
@@ -81,7 +81,7 @@ func (uc *UseCase) Login(ctx context.Context, username, password string) (string
 		return "", apperr.Wrap(apperr.CodeInternal, "failed to generate token", err)
 	}
 
-	logger.GetLogger().Info("user logged in", zap.String("username", username))
+	uc.logger.Info("user logged in", zap.String("username", username))
 	return token, nil
 }
 

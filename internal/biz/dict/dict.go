@@ -7,17 +7,17 @@ import (
 
 	"auth_info/internal/apperr"
 	"auth_info/internal/data"
-	"auth_info/internal/logger"
 )
 
 // UseCase 字典配置业务逻辑
 type UseCase struct {
-	repo data.DictRepository
+	repo   DictRepository
+	logger *zap.Logger
 }
 
 // NewUseCase Wire Provider
-func NewUseCase(repo data.DictRepository) *UseCase {
-	return &UseCase{repo: repo}
+func NewUseCase(repo DictRepository, logger *zap.Logger) *UseCase {
+	return &UseCase{repo: repo, logger: logger}
 }
 
 // ListDictTypes 获取所有字典类型，按 sort 正序排列
@@ -49,7 +49,7 @@ func (uc *UseCase) CreateDictType(ctx context.Context, code, name, description s
 		return apperr.Wrap(apperr.CodeInternal, "failed to create dict type", err)
 	}
 
-	logger.GetLogger().Info("dict type created", zap.String("code", code))
+	uc.logger.Info("dict type created", zap.String("code", code))
 	return nil
 }
 
@@ -63,7 +63,7 @@ func (uc *UseCase) UpdateDictType(ctx context.Context, id uint, name, descriptio
 		return apperr.New(apperr.CodeNotFound, "dict type not found")
 	}
 
-	logger.GetLogger().Info("dict type updated", zap.Uint("id", id))
+	uc.logger.Info("dict type updated", zap.Uint("id", id))
 	return nil
 }
 
@@ -77,7 +77,7 @@ func (uc *UseCase) DeleteDictType(ctx context.Context, id uint) error {
 		return apperr.New(apperr.CodeNotFound, "dict type not found")
 	}
 
-	logger.GetLogger().Info("dict type deleted", zap.Uint("id", id))
+	uc.logger.Info("dict type deleted", zap.Uint("id", id))
 	return nil
 }
 
@@ -104,7 +104,7 @@ func (uc *UseCase) CreateDictItem(ctx context.Context, typeCode, itemKey, itemVa
 		return apperr.Wrap(apperr.CodeInternal, "failed to create dict item", err)
 	}
 
-	logger.GetLogger().Info("dict item created",
+	uc.logger.Info("dict item created",
 		zap.String("type_code", typeCode),
 		zap.String("item_key", itemKey),
 	)
@@ -121,7 +121,7 @@ func (uc *UseCase) UpdateDictItem(ctx context.Context, id uint, itemKey, itemVal
 		return apperr.New(apperr.CodeNotFound, "dict item not found")
 	}
 
-	logger.GetLogger().Info("dict item updated", zap.Uint("id", id))
+	uc.logger.Info("dict item updated", zap.Uint("id", id))
 	return nil
 }
 
@@ -135,6 +135,6 @@ func (uc *UseCase) DeleteDictItem(ctx context.Context, id uint) error {
 		return apperr.New(apperr.CodeNotFound, "dict item not found")
 	}
 
-	logger.GetLogger().Info("dict item deleted", zap.Uint("id", id))
+	uc.logger.Info("dict item deleted", zap.Uint("id", id))
 	return nil
 }

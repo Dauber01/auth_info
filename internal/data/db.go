@@ -11,10 +11,9 @@ import (
 	gormlogger "gorm.io/gorm/logger"
 
 	"auth_info/internal/config"
-	"auth_info/internal/logger"
 )
 
-func NewDB(cfg *config.Config) (*gorm.DB, error) {
+func NewDB(cfg *config.Config, log *zap.Logger) (*gorm.DB, error) {
 	c := cfg.MySQL
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local",
@@ -28,7 +27,7 @@ func NewDB(cfg *config.Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("connect mysql: %w", err)
 	}
 
-	logger.GetLogger().Info("MySQL connected", zap.String("db", c.DBName))
+	log.Info("MySQL connected", zap.String("db", c.DBName))
 	return db, nil
 }
 
@@ -39,7 +38,7 @@ func RunMigrations(db *gorm.DB) error {
 	return nil
 }
 
-func NewEnforcer(db *gorm.DB, cfg *config.Config) (*casbin.Enforcer, error) {
+func NewEnforcer(db *gorm.DB, cfg *config.Config, log *zap.Logger) (*casbin.Enforcer, error) {
 	adapter, err := gormadapter.NewAdapterByDB(db)
 	if err != nil {
 		return nil, fmt.Errorf("casbin adapter: %w", err)
@@ -54,7 +53,7 @@ func NewEnforcer(db *gorm.DB, cfg *config.Config) (*casbin.Enforcer, error) {
 		return nil, fmt.Errorf("load policy: %w", err)
 	}
 
-	logger.GetLogger().Info("Casbin enforcer initialized")
+	log.Info("Casbin enforcer initialized")
 	return enforcer, nil
 }
 

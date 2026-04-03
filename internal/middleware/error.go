@@ -5,7 +5,6 @@ import (
 	"go.uber.org/zap"
 
 	"auth_info/internal/apperr"
-	"auth_info/internal/logger"
 )
 
 type ErrorResponse struct {
@@ -14,7 +13,7 @@ type ErrorResponse struct {
 	Data    any    `json:"data,omitempty"`
 }
 
-func ErrorHandler() gin.HandlerFunc {
+func ErrorHandler(log *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
 
@@ -23,7 +22,7 @@ func ErrorHandler() gin.HandlerFunc {
 		}
 
 		err := c.Errors.Last().Err
-		logger.GetLogger().Error(
+		log.Error(
 			"request failed",
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.FullPath()),
@@ -40,12 +39,4 @@ func ErrorHandler() gin.HandlerFunc {
 			Message: apperr.Message(err),
 		})
 	}
-}
-
-func SuccessResponse(c *gin.Context, code int, message string, data any) {
-	c.JSON(code, gin.H{
-		"code":    code,
-		"message": message,
-		"data":    data,
-	})
 }

@@ -1,11 +1,21 @@
 package logger
 
 import (
+	"auth_info/internal/config"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 var Logger *zap.Logger
+
+// NewLogger Wire Provider，从 Config 构造 *zap.Logger，同时赋值全局变量供 cmd 工具继续使用
+func NewLogger(cfg *config.Config) (*zap.Logger, error) {
+	if err := InitLogger(cfg.Log.Level); err != nil {
+		return nil, err
+	}
+	return Logger, nil
+}
 
 func InitLogger(level string) error {
 	var zapLevel zapcore.Level

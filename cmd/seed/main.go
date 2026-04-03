@@ -22,12 +22,13 @@ func main() {
 		log.Fatalf("Failed to init logger: %v", err)
 	}
 
-	db, err := data.NewDB(cfg)
+	logg := logger.GetLogger()
+	db, err := data.NewDB(cfg, logg)
 	if err != nil {
 		log.Fatalf("Failed to connect mysql: %v", err)
 	}
 
-	enforcer, err := data.NewEnforcer(db, cfg)
+	enforcer, err := data.NewEnforcer(db, cfg, logg)
 	if err != nil {
 		log.Fatalf("Failed to init casbin enforcer: %v", err)
 	}
