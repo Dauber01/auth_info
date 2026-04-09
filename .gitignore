@@ -31,6 +31,10 @@ go.work
 .vscode/settings.local.json
 .vscode/.history/
 
+# AI assistant local files
+.agents/
+AGENTS.md
+
 # Dependencies
 vendor/
 
