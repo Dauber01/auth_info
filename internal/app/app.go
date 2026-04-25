@@ -43,6 +43,7 @@ type AppDeps struct {
 	Enforcer        *casbin.Enforcer
 	HelloHandler    *handler.HelloHandler
 	AuthHandler     *handler.AuthHandler
+	HelloMCPHandler http.Handler
 	HelloSvc        *service.HelloService
 	DictHandler     *handler.DictHandler
 	DocumentHandler *handler.DocumentHandler
@@ -63,6 +64,7 @@ func NewApp(
 	engine.Use(middleware.ErrorHandler(log))
 
 	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	engine.Any("/mcp", gin.WrapH(deps.HelloMCPHandler))
 
 	api := engine.Group("/api/v1")
 	{

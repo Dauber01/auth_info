@@ -13,6 +13,7 @@ import (
 	"auth_info/internal/data"
 	"auth_info/internal/handler"
 	"auth_info/internal/logger"
+	"auth_info/internal/mcpserver"
 	"auth_info/internal/service"
 )
 
@@ -33,6 +34,7 @@ func InitializeApp(cfg *config.Config) (*App, error) {
 		handler.NewAuthHandler,
 		handler.NewDictHandler,
 		handler.NewDocumentHandler,
+		mcpserver.NewHelloMCPHandler,
 		service.NewHelloService,
 		wire.Struct(new(AppDeps), "*"),
 		NewApp,

@@ -7,57 +7,58 @@
 package app
 
 import (
-	bizauth "auth_info/internal/biz/auth"
-	bizdict "auth_info/internal/biz/dict"
-	bizdoc "auth_info/internal/biz/document"
-	bizhello "auth_info/internal/biz/hello"
+	"auth_info/internal/biz/auth"
+	"auth_info/internal/biz/dict"
+	"auth_info/internal/biz/document"
+	"auth_info/internal/biz/hello"
 	"auth_info/internal/config"
 	"auth_info/internal/data"
 	"auth_info/internal/handler"
 	"auth_info/internal/logger"
+	"auth_info/internal/mcpserver"
 	"auth_info/internal/service"
 )
 
 // Injectors from wire.go:
 
 func InitializeApp(cfg *config.Config) (*App, error) {
-	log, err := logger.NewLogger(cfg)
+	zapLogger, err := logger.NewLogger(cfg)
 	if err != nil {
 		return nil, err
 	}
-	db, err := data.NewDB(cfg, log)
-	if err != nil {
-		return nil, err
-	}
-	enforcer, err := data.NewEnforcer(db, cfg, log)
+	db, err := data.NewDB(cfg, zapLogger)
 	if err != nil {
 		return nil, err
 	}
 	userRepo := data.NewUserRepository(db)
-	var userRepository bizauth.UserRepository = userRepo
-	dictRepo := data.NewDictRepository(db)
-	var dictRepository bizdict.DictRepository = dictRepo
-	authUseCase := bizauth.NewUseCase(userRepository, cfg, log)
-	helloUseCase := bizhello.NewUseCase(log)
-	dictUseCase := bizdict.NewUseCase(dictRepository, log)
-	documentUseCase := bizdoc.NewUseCase()
+	useCase := auth.NewUseCase(userRepo, cfg, zapLogger)
+	enforcer, err := data.NewEnforcer(db, cfg, zapLogger)
+	if err != nil {
+		return nil, err
+	}
+	helloUseCase := hello.NewUseCase(zapLogger)
 	helloHandler := handler.NewHelloHandler(helloUseCase)
-	authHandler := handler.NewAuthHandler(authUseCase)
-	dictHandler := handler.NewDictHandler(dictUseCase)
-	documentHandler := handler.NewDocumentHandler(documentUseCase)
+	authHandler := handler.NewAuthHandler(useCase)
+	httpHandler := mcpserver.NewHelloMCPHandler(helloUseCase)
 	helloService := service.NewHelloService(helloUseCase)
+	dictRepo := data.NewDictRepository(db)
+	dictUseCase := dict.NewUseCase(dictRepo, zapLogger)
+	dictHandler := handler.NewDictHandler(dictUseCase)
+	documentUseCase := document.NewUseCase()
+	documentHandler := handler.NewDocumentHandler(documentUseCase)
 	appDeps := AppDeps{
-		AuthUC:          authUseCase,
+		AuthUC:          useCase,
 		Enforcer:        enforcer,
 		HelloHandler:    helloHandler,
 		AuthHandler:     authHandler,
+		HelloMCPHandler: httpHandler,
 		HelloSvc:        helloService,
 		DictHandler:     dictHandler,
 		DocumentHandler: documentHandler,
 	}
-	application, err := NewApp(cfg, log, appDeps)
+	app, err := NewApp(cfg, zapLogger, appDeps)
 	if err != nil {
 		return nil, err
 	}
-	return application, nil
+	return app, nil
 }
