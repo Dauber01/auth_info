@@ -15,7 +15,22 @@
       "Bash(go get:*)",
       "Bash(go test ./... -v)",
       "Bash(go vet ./...)",
-      "Bash(go test -v ./...)"
+      "Bash(go test -v ./...)",
+      "Bash(go version *)",
+      "Bash(brew --version)",
+      "Bash(go env *)",
+      "Bash(ls -la ~/go/bin/ 2>&1)",
+      "Read(//Users/lucifer/go/bin/**)",
+      "Bash(protoc --version)",
+      "Bash(~/go/bin/protoc-gen-go --version)",
+      "Bash(~/go/bin/protoc-gen-go-grpc --version)",
+      "Bash(~/go/bin/wire help *)",
+      "Bash(~/go/bin/swag --version)",
+      "Bash(~/go/bin/gopls version *)",
+      "Bash(~/go/bin/golangci-lint --version)",
+      "Bash(~/go/bin/air -v)",
+      "Bash(cat ~/.zshrc 2>/dev/null | grep -E \"\\(GOPATH|GOBIN|go/bin\\)\" || echo \"no go bin config in .zshrc\")",
+      "Read(//Users/lucifer/**)"
     ]
   }
 }
