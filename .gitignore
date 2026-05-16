@@ -33,6 +33,7 @@ go.work
 
 # AI assistant local files
 .agents/
+.codex/
 AGENTS.md
 
 # Dependencies
@@ -55,6 +56,5 @@ coverage.html
 
 # IDE workspace files
 *.code-workspace
-
 
 
