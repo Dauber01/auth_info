@@ -6,6 +6,8 @@ import (
 
 	"auth_info/internal/config"
 	"auth_info/internal/data"
+	dataauth "auth_info/internal/data/auth"
+	datadict "auth_info/internal/data/dict"
 	"auth_info/internal/logger"
 )
 
@@ -28,7 +30,12 @@ func main() {
 		log.Fatalf("Failed to connect mysql: %v", err)
 	}
 
-	if err := data.RunMigrations(db); err != nil {
+	// 新增模块时在此处追加对应持久化模型即可。
+	if err := data.RunMigrations(db,
+		&dataauth.User{},
+		&datadict.DictType{},
+		&datadict.DictItem{},
+	); err != nil {
 		log.Fatalf("Migration failed: %v", err)
 	}
 

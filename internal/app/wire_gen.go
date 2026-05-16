@@ -7,16 +7,21 @@
 package app
 
 import (
-	"auth_info/internal/biz/auth"
-	"auth_info/internal/biz/dict"
+	auth2 "auth_info/internal/biz/auth"
+	dict2 "auth_info/internal/biz/dict"
 	"auth_info/internal/biz/document"
 	"auth_info/internal/biz/hello"
 	"auth_info/internal/config"
 	"auth_info/internal/data"
-	"auth_info/internal/handler"
+	"auth_info/internal/data/auth"
+	"auth_info/internal/data/dict"
+	auth3 "auth_info/internal/handler/auth"
+	dict3 "auth_info/internal/handler/dict"
+	document2 "auth_info/internal/handler/document"
+	hello2 "auth_info/internal/handler/hello"
 	"auth_info/internal/logger"
 	"auth_info/internal/mcpserver"
-	"auth_info/internal/service"
+	hello3 "auth_info/internal/service/hello"
 )
 
 // Injectors from wire.go:
@@ -30,29 +35,29 @@ func InitializeApp(cfg *config.Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	userRepo := data.NewUserRepository(db)
-	useCase := auth.NewUseCase(userRepo, cfg, zapLogger)
+	userRepo := auth.NewUserRepository(db)
+	useCase := auth2.NewUseCase(userRepo, cfg, zapLogger)
 	enforcer, err := data.NewEnforcer(db, cfg, zapLogger)
 	if err != nil {
 		return nil, err
 	}
 	helloUseCase := hello.NewUseCase(zapLogger)
-	helloHandler := handler.NewHelloHandler(helloUseCase)
-	authHandler := handler.NewAuthHandler(useCase)
+	handler := hello2.NewHandler(helloUseCase)
+	authHandler := auth3.NewHandler(useCase)
 	httpHandler := mcpserver.NewHelloMCPHandler(helloUseCase)
-	helloService := service.NewHelloService(helloUseCase)
-	dictRepo := data.NewDictRepository(db)
-	dictUseCase := dict.NewUseCase(dictRepo, zapLogger)
-	dictHandler := handler.NewDictHandler(dictUseCase)
+	service := hello3.NewService(helloUseCase)
+	dictRepo := dict.NewDictRepository(db)
+	dictUseCase := dict2.NewUseCase(dictRepo, zapLogger)
+	dictHandler := dict3.NewHandler(dictUseCase)
 	documentUseCase := document.NewUseCase()
-	documentHandler := handler.NewDocumentHandler(documentUseCase)
+	documentHandler := document2.NewHandler(documentUseCase)
 	appDeps := AppDeps{
 		AuthUC:          useCase,
 		Enforcer:        enforcer,
-		HelloHandler:    helloHandler,
+		HelloHandler:    handler,
 		AuthHandler:     authHandler,
 		HelloMCPHandler: httpHandler,
-		HelloSvc:        helloService,
+		HelloSvc:        service,
 		DictHandler:     dictHandler,
 		DocumentHandler: documentHandler,
 	}

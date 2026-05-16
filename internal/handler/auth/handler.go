@@ -1,4 +1,4 @@
-package handler
+package auth
 
 import (
 	"net/http"
@@ -7,16 +7,17 @@ import (
 
 	apipb "auth_info/api/gen/api/proto"
 	bizauth "auth_info/internal/biz/auth"
+	"auth_info/internal/handler/httpx"
 )
 
-// AuthHandler 登录/注册 HTTP 处理器
-type AuthHandler struct {
+// Handler 登录/注册 HTTP 处理器
+type Handler struct {
 	uc *bizauth.UseCase
 }
 
-// NewAuthHandler Wire Provider
-func NewAuthHandler(uc *bizauth.UseCase) *AuthHandler {
-	return &AuthHandler{uc: uc}
+// NewHandler Wire Provider
+func NewHandler(uc *bizauth.UseCase) *Handler {
+	return &Handler{uc: uc}
 }
 
 // Register
@@ -25,18 +26,18 @@ func NewAuthHandler(uc *bizauth.UseCase) *AuthHandler {
 // @Accept json
 // @Produce json
 // @Router /auth/register [post]
-func (h *AuthHandler) Register(c *gin.Context) {
+func (h *Handler) Register(c *gin.Context) {
 	var req apipb.RegisterRequest
-	if !bindAndValidateJSON(c, &req) {
+	if !httpx.BindAndValidateJSON(c, &req) {
 		return
 	}
 
 	if err := h.uc.Register(c.Request.Context(), req.GetUsername(), req.GetPassword()); err != nil {
-		writeError(c, err)
+		httpx.WriteError(c, err)
 		return
 	}
 
-	writeOperationReply(c, http.StatusOK, "registered successfully")
+	httpx.WriteOperationReply(c, http.StatusOK, "registered successfully")
 }
 
 // Login
@@ -45,15 +46,15 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Router /auth/login [post]
-func (h *AuthHandler) Login(c *gin.Context) {
+func (h *Handler) Login(c *gin.Context) {
 	var req apipb.LoginRequest
-	if !bindAndValidateJSON(c, &req) {
+	if !httpx.BindAndValidateJSON(c, &req) {
 		return
 	}
 
 	token, err := h.uc.Login(c.Request.Context(), req.GetUsername(), req.GetPassword())
 	if err != nil {
-		writeError(c, err)
+		httpx.WriteError(c, err)
 		return
 	}
 

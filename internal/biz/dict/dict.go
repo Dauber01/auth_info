@@ -6,7 +6,6 @@ import (
 	"go.uber.org/zap"
 
 	"auth_info/internal/apperr"
-	"auth_info/internal/data"
 )
 
 // UseCase 字典配置业务逻辑
@@ -21,7 +20,7 @@ func NewUseCase(repo DictRepository, logger *zap.Logger) *UseCase {
 }
 
 // ListDictTypes 获取所有字典类型，按 sort 正序排列
-func (uc *UseCase) ListDictTypes(ctx context.Context) ([]data.DictType, error) {
+func (uc *UseCase) ListDictTypes(ctx context.Context) ([]DictType, error) {
 	types, err := uc.repo.ListDictTypes(ctx)
 	if err != nil {
 		return nil, apperr.Wrap(apperr.CodeInternal, "failed to list dict types", err)
@@ -39,7 +38,7 @@ func (uc *UseCase) CreateDictType(ctx context.Context, code, name, description s
 		return apperr.New(apperr.CodeConflict, "dict type code already exists")
 	}
 
-	dictType := data.DictType{
+	dictType := DictType{
 		Code:        code,
 		Name:        name,
 		Description: description,
@@ -82,7 +81,7 @@ func (uc *UseCase) DeleteDictType(ctx context.Context, id uint) error {
 }
 
 // ListDictItems 根据类型编码获取字典数据，按 sort 正序排列
-func (uc *UseCase) ListDictItems(ctx context.Context, typeCode string) ([]data.DictItem, error) {
+func (uc *UseCase) ListDictItems(ctx context.Context, typeCode string) ([]DictItem, error) {
 	items, err := uc.repo.ListDictItems(ctx, typeCode)
 	if err != nil {
 		return nil, apperr.Wrap(apperr.CodeInternal, "failed to list dict items", err)
@@ -92,7 +91,7 @@ func (uc *UseCase) ListDictItems(ctx context.Context, typeCode string) ([]data.D
 
 // CreateDictItem 创建字典数据
 func (uc *UseCase) CreateDictItem(ctx context.Context, typeCode, itemKey, itemValue, description string, sort int) error {
-	item := data.DictItem{
+	item := DictItem{
 		TypeCode:    typeCode,
 		ItemKey:     itemKey,
 		ItemValue:   itemValue,

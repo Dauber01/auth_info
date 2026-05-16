@@ -1,4 +1,4 @@
-package handler
+package hello
 
 import (
 	"net/http"
@@ -10,14 +10,14 @@ import (
 	bizhello "auth_info/internal/biz/hello"
 )
 
-// HelloHandler HTTP 请求处理器
-type HelloHandler struct {
+// Handler Hello HTTP 请求处理器
+type Handler struct {
 	uc *bizhello.UseCase
 }
 
-// NewHelloHandler Wire Provider
-func NewHelloHandler(uc *bizhello.UseCase) *HelloHandler {
-	return &HelloHandler{uc: uc}
+// NewHandler Wire Provider
+func NewHandler(uc *bizhello.UseCase) *Handler {
+	return &Handler{uc: uc}
 }
 
 // Hello
@@ -31,7 +31,7 @@ func NewHelloHandler(uc *bizhello.UseCase) *HelloHandler {
 // @Failure 401 {object} apipb.OperationReply
 // @Security BearerAuth
 // @Router /hello [get]
-func (h *HelloHandler) Hello(c *gin.Context) {
+func (h *Handler) Hello(c *gin.Context) {
 	req := apipb.HelloRequest{Name: strings.TrimSpace(c.Query("name"))}
 	msg := h.uc.SayHello(c.Request.Context(), req.GetName())
 

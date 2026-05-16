@@ -1,14 +1,8 @@
-package data
+package dict
 
 import "gorm.io/gorm"
 
-type User struct {
-	gorm.Model
-	Username string `gorm:"uniqueIndex;size:64;not null" json:"username"`
-	Password string `gorm:"size:256;not null"            json:"-"`
-	Role     string `gorm:"size:32;default:'user'"       json:"role"`
-}
-
+// DictType 字典类型持久化模型。仅在 data 层使用。
 type DictType struct {
 	gorm.Model
 	Code        string `gorm:"uniqueIndex;size:64;not null"  json:"code"`
@@ -17,6 +11,7 @@ type DictType struct {
 	Sort        int    `gorm:"default:0"                     json:"sort"`
 }
 
+// DictItem 字典数据持久化模型。仅在 data 层使用。
 type DictItem struct {
 	gorm.Model
 	TypeCode    string `gorm:"index;size:64;not null"        json:"type_code"`

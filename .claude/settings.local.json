@@ -30,7 +30,9 @@
       "Bash(~/go/bin/golangci-lint --version)",
       "Bash(~/go/bin/air -v)",
       "Bash(cat ~/.zshrc 2>/dev/null | grep -E \"\\(GOPATH|GOBIN|go/bin\\)\" || echo \"no go bin config in .zshrc\")",
-      "Read(//Users/lucifer/**)"
+      "Read(//Users/lucifer/**)",
+      "Bash(go test *)",
+      "Bash(git stash *)"
     ]
   }
 }

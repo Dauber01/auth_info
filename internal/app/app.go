@@ -18,11 +18,18 @@ import (
 
 	bizauth "auth_info/internal/biz/auth"
 	"auth_info/internal/config"
-	"auth_info/internal/handler"
+	authhdl "auth_info/internal/handler/auth"
+	dicthdl "auth_info/internal/handler/dict"
+	dochdl "auth_info/internal/handler/document"
+	hellohdl "auth_info/internal/handler/hello"
 	"auth_info/internal/logger"
 	"auth_info/internal/middleware"
-	"auth_info/internal/router"
+	authrouter "auth_info/internal/router/auth"
+	dictrouter "auth_info/internal/router/dict"
+	docrouter "auth_info/internal/router/document"
+	hellorouter "auth_info/internal/router/hello"
 	"auth_info/internal/service"
+	hellosvc "auth_info/internal/service/hello"
 	"auth_info/internal/validation"
 )
 
@@ -31,7 +38,7 @@ type App struct {
 	grpcServer *grpc.Server
 	httpServer *http.Server
 	config     *config.Config
-	helloSvc   *service.HelloService
+	helloSvc   *hellosvc.Service
 	logger     *zap.Logger
 	stopCh     chan struct{}
 	stopOnce   sync.Once
@@ -41,12 +48,12 @@ type App struct {
 type AppDeps struct {
 	AuthUC          *bizauth.UseCase
 	Enforcer        *casbin.Enforcer
-	HelloHandler    *handler.HelloHandler
-	AuthHandler     *handler.AuthHandler
+	HelloHandler    *hellohdl.Handler
+	AuthHandler     *authhdl.Handler
 	HelloMCPHandler http.Handler
-	HelloSvc        *service.HelloService
-	DictHandler     *handler.DictHandler
-	DocumentHandler *handler.DocumentHandler
+	HelloSvc        *hellosvc.Service
+	DictHandler     *dicthdl.Handler
+	DocumentHandler *dochdl.Handler
 }
 
 const grpcGracefulStopTimeout = 5 * time.Second
@@ -69,16 +76,16 @@ func NewApp(
 	api := engine.Group("/api/v1")
 	{
 		// Public routes (no auth)
-		router.RegisterAuthRoutes(api, deps.AuthHandler)
+		authrouter.Register(api, deps.AuthHandler)
 
 		// Protected routes (JWT + Casbin)
 		protected := api.Group("")
 		protected.Use(middleware.JWTAuth(deps.AuthUC))
 		protected.Use(middleware.CasbinAuth(deps.Enforcer))
 		{
-			router.RegisterHelloRoutes(protected, deps.HelloHandler)
-			router.RegisterDictRoutes(protected, deps.DictHandler)
-			router.RegisterDocumentRoutes(protected, deps.DocumentHandler)
+			hellorouter.Register(protected, deps.HelloHandler)
+			dictrouter.Register(protected, deps.DictHandler)
+			docrouter.Register(protected, deps.DocumentHandler)
 		}
 	}
 

@@ -1,4 +1,4 @@
-package handler
+package dict
 
 import (
 	"net/http"
@@ -8,16 +8,17 @@ import (
 
 	apipb "auth_info/api/gen/api/proto"
 	bizdict "auth_info/internal/biz/dict"
+	"auth_info/internal/handler/httpx"
 )
 
-// DictHandler handles dictionary HTTP APIs.
-type DictHandler struct {
+// Handler 字典模块 HTTP 处理器。
+type Handler struct {
 	uc *bizdict.UseCase
 }
 
-// NewDictHandler Wire Provider
-func NewDictHandler(uc *bizdict.UseCase) *DictHandler {
-	return &DictHandler{uc: uc}
+// NewHandler Wire Provider
+func NewHandler(uc *bizdict.UseCase) *Handler {
+	return &Handler{uc: uc}
 }
 
 // ListDictTypes
@@ -26,10 +27,10 @@ func NewDictHandler(uc *bizdict.UseCase) *DictHandler {
 // @Produce  json
 // @Security BearerAuth
 // @Router   /dict/types [get]
-func (h *DictHandler) ListDictTypes(c *gin.Context) {
+func (h *Handler) ListDictTypes(c *gin.Context) {
 	types, err := h.uc.ListDictTypes(c.Request.Context())
 	if err != nil {
-		writeError(c, err)
+		httpx.WriteError(c, err)
 		return
 	}
 
@@ -47,18 +48,18 @@ func (h *DictHandler) ListDictTypes(c *gin.Context) {
 // @Produce  json
 // @Security BearerAuth
 // @Router   /dict/types [post]
-func (h *DictHandler) CreateDictType(c *gin.Context) {
+func (h *Handler) CreateDictType(c *gin.Context) {
 	var req apipb.CreateDictTypeRequest
-	if !bindAndValidateJSON(c, &req) {
+	if !httpx.BindAndValidateJSON(c, &req) {
 		return
 	}
 
 	if err := h.uc.CreateDictType(c.Request.Context(), req.GetCode(), req.GetName(), req.GetDescription(), int(req.GetSort())); err != nil {
-		writeError(c, err)
+		httpx.WriteError(c, err)
 		return
 	}
 
-	writeOperationReply(c, http.StatusOK, "created successfully")
+	httpx.WriteOperationReply(c, http.StatusOK, "created successfully")
 }
 
 // UpdateDictType
@@ -68,20 +69,20 @@ func (h *DictHandler) CreateDictType(c *gin.Context) {
 // @Produce  json
 // @Security BearerAuth
 // @Router   /dict/types/{id} [put]
-func (h *DictHandler) UpdateDictType(c *gin.Context) {
+func (h *Handler) UpdateDictType(c *gin.Context) {
 	var req apipb.UpdateDictTypeRequest
-	if !bindPathIDAndValidateJSON(c, "id", &req, func(id uint64) {
+	if !httpx.BindPathIDAndValidateJSON(c, "id", &req, func(id uint64) {
 		req.Id = id
 	}) {
 		return
 	}
 
 	if err := h.uc.UpdateDictType(c.Request.Context(), uint(req.GetId()), req.GetName(), req.GetDescription(), int(req.GetSort())); err != nil {
-		writeError(c, err)
+		httpx.WriteError(c, err)
 		return
 	}
 
-	writeOperationReply(c, http.StatusOK, "updated successfully")
+	httpx.WriteOperationReply(c, http.StatusOK, "updated successfully")
 }
 
 // DeleteDictType
@@ -90,20 +91,20 @@ func (h *DictHandler) UpdateDictType(c *gin.Context) {
 // @Produce  json
 // @Security BearerAuth
 // @Router   /dict/types/{id} [delete]
-func (h *DictHandler) DeleteDictType(c *gin.Context) {
+func (h *Handler) DeleteDictType(c *gin.Context) {
 	req := apipb.DeleteDictTypeRequest{}
-	if !validatePathIDRequest(c, "id", &req, func(id uint64) {
+	if !httpx.ValidatePathIDRequest(c, "id", &req, func(id uint64) {
 		req.Id = id
 	}) {
 		return
 	}
 
 	if err := h.uc.DeleteDictType(c.Request.Context(), uint(req.GetId())); err != nil {
-		writeError(c, err)
+		httpx.WriteError(c, err)
 		return
 	}
 
-	writeOperationReply(c, http.StatusOK, "deleted successfully")
+	httpx.WriteOperationReply(c, http.StatusOK, "deleted successfully")
 }
 
 // ListDictItems
@@ -112,15 +113,15 @@ func (h *DictHandler) DeleteDictType(c *gin.Context) {
 // @Produce  json
 // @Security BearerAuth
 // @Router   /dict/items [get]
-func (h *DictHandler) ListDictItems(c *gin.Context) {
+func (h *Handler) ListDictItems(c *gin.Context) {
 	req := apipb.ListDictItemsRequest{TypeCode: strings.TrimSpace(c.Query("type_code"))}
-	if !validateProtoMessage(c, &req) {
+	if !httpx.ValidateProto(c, &req) {
 		return
 	}
 
 	items, err := h.uc.ListDictItems(c.Request.Context(), req.GetTypeCode())
 	if err != nil {
-		writeError(c, err)
+		httpx.WriteError(c, err)
 		return
 	}
 
@@ -138,18 +139,18 @@ func (h *DictHandler) ListDictItems(c *gin.Context) {
 // @Produce  json
 // @Security BearerAuth
 // @Router   /dict/items [post]
-func (h *DictHandler) CreateDictItem(c *gin.Context) {
+func (h *Handler) CreateDictItem(c *gin.Context) {
 	var req apipb.CreateDictItemRequest
-	if !bindAndValidateJSON(c, &req) {
+	if !httpx.BindAndValidateJSON(c, &req) {
 		return
 	}
 
 	if err := h.uc.CreateDictItem(c.Request.Context(), req.GetTypeCode(), req.GetItemKey(), req.GetItemValue(), req.GetDescription(), int(req.GetSort())); err != nil {
-		writeError(c, err)
+		httpx.WriteError(c, err)
 		return
 	}
 
-	writeOperationReply(c, http.StatusOK, "created successfully")
+	httpx.WriteOperationReply(c, http.StatusOK, "created successfully")
 }
 
 // UpdateDictItem
@@ -159,20 +160,20 @@ func (h *DictHandler) CreateDictItem(c *gin.Context) {
 // @Produce  json
 // @Security BearerAuth
 // @Router   /dict/items/{id} [put]
-func (h *DictHandler) UpdateDictItem(c *gin.Context) {
+func (h *Handler) UpdateDictItem(c *gin.Context) {
 	var req apipb.UpdateDictItemRequest
-	if !bindPathIDAndValidateJSON(c, "id", &req, func(id uint64) {
+	if !httpx.BindPathIDAndValidateJSON(c, "id", &req, func(id uint64) {
 		req.Id = id
 	}) {
 		return
 	}
 
 	if err := h.uc.UpdateDictItem(c.Request.Context(), uint(req.GetId()), req.GetItemKey(), req.GetItemValue(), req.GetDescription(), int(req.GetSort()), int(req.GetStatus())); err != nil {
-		writeError(c, err)
+		httpx.WriteError(c, err)
 		return
 	}
 
-	writeOperationReply(c, http.StatusOK, "updated successfully")
+	httpx.WriteOperationReply(c, http.StatusOK, "updated successfully")
 }
 
 // DeleteDictItem
@@ -181,18 +182,18 @@ func (h *DictHandler) UpdateDictItem(c *gin.Context) {
 // @Produce  json
 // @Security BearerAuth
 // @Router   /dict/items/{id} [delete]
-func (h *DictHandler) DeleteDictItem(c *gin.Context) {
+func (h *Handler) DeleteDictItem(c *gin.Context) {
 	req := apipb.DeleteDictItemRequest{}
-	if !validatePathIDRequest(c, "id", &req, func(id uint64) {
+	if !httpx.ValidatePathIDRequest(c, "id", &req, func(id uint64) {
 		req.Id = id
 	}) {
 		return
 	}
 
 	if err := h.uc.DeleteDictItem(c.Request.Context(), uint(req.GetId())); err != nil {
-		writeError(c, err)
+		httpx.WriteError(c, err)
 		return
 	}
 
-	writeOperationReply(c, http.StatusOK, "deleted successfully")
+	httpx.WriteOperationReply(c, http.StatusOK, "deleted successfully")
 }

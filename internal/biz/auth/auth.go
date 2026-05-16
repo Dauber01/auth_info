@@ -11,7 +11,6 @@ import (
 
 	"auth_info/internal/apperr"
 	"auth_info/internal/config"
-	"auth_info/internal/data"
 )
 
 // Claims JWT 自定义声明
@@ -49,7 +48,7 @@ func (uc *UseCase) Register(ctx context.Context, username, password string) erro
 		return apperr.Wrap(apperr.CodeInternal, "failed to hash password", err)
 	}
 
-	user := data.User{
+	user := User{
 		Username: username,
 		Password: string(hash),
 		Role:     "user",
@@ -100,7 +99,7 @@ func (uc *UseCase) ParseToken(tokenStr string) (*Claims, error) {
 	return claims, nil
 }
 
-func (uc *UseCase) generateToken(user *data.User) (string, error) {
+func (uc *UseCase) generateToken(user *User) (string, error) {
 	expire := time.Duration(uc.cfg.JWT.Expire) * time.Hour
 	claims := Claims{
 		UserID:   user.ID,

@@ -1,4 +1,4 @@
-package handler
+package auth
 
 import (
 	"bytes"
@@ -13,26 +13,27 @@ import (
 
 	bizauth "auth_info/internal/biz/auth"
 	"auth_info/internal/config"
-	"auth_info/internal/data"
 	"auth_info/internal/middleware"
 )
 
 type authRepoStub struct {
-	user *data.User
+	user *bizauth.User
 	err  error
 }
 
-func (s *authRepoStub) GetByUsername(_ context.Context, _ string) (*data.User, error) { return s.user, s.err }
-func (s *authRepoStub) Create(_ context.Context, _ *data.User) error { return s.err }
+func (s *authRepoStub) GetByUsername(_ context.Context, _ string) (*bizauth.User, error) {
+	return s.user, s.err
+}
+func (s *authRepoStub) Create(_ context.Context, _ *bizauth.User) error { return s.err }
 
-func newAuthHandlerForTest(repo bizauth.UserRepository) *AuthHandler {
+func newHandlerForTest(repo bizauth.UserRepository) *Handler {
 	uc := bizauth.NewUseCase(repo, &config.Config{JWT: config.JWTConfig{Secret: "test", Expire: 1}}, zap.NewNop())
-	return NewAuthHandler(uc)
+	return NewHandler(uc)
 }
 
 func TestRegister_BadRequest(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := newAuthHandlerForTest(&authRepoStub{})
+	h := newHandlerForTest(&authRepoStub{})
 
 	engine := gin.New()
 	engine.Use(middleware.ErrorHandler(zap.NewNop()))

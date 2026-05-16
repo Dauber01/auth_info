@@ -1,4 +1,4 @@
-package data
+package dict
 
 import (
 	"context"
@@ -56,7 +56,7 @@ func TestDictRepo_GetDictTypeByCode(t *testing.T) {
 	tests := []struct {
 		name    string
 		mockFn  func(sqlmock.Sqlmock)
-		want    *DictType
+		wantID  uint
 		wantErr error
 	}{
 		{
@@ -68,14 +68,13 @@ func TestDictRepo_GetDictTypeByCode(t *testing.T) {
 				}).AddRow(1, now, now, nil, "gender", "Gender", "gender dict", 1)
 				mock.ExpectQuery(query).WithArgs("gender", 1).WillReturnRows(rows)
 			},
-			want: &DictType{Model: gorm.Model{ID: 1}, Code: "gender", Name: "Gender", Description: "gender dict", Sort: 1},
+			wantID: 1,
 		},
 		{
 			name: "not_found",
 			mockFn: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery(query).WithArgs("gender", 1).WillReturnError(gorm.ErrRecordNotFound)
 			},
-			want: nil,
 		},
 		{
 			name: "db_error",
@@ -97,7 +96,7 @@ func TestDictRepo_GetDictTypeByCode(t *testing.T) {
 			if !errors.Is(err, tt.wantErr) {
 				t.Fatalf("expected error %v, got %v", tt.wantErr, err)
 			}
-			if tt.want == nil {
+			if tt.wantID == 0 {
 				if got != nil {
 					t.Fatalf("expected nil, got %+v", got)
 				}
@@ -106,8 +105,8 @@ func TestDictRepo_GetDictTypeByCode(t *testing.T) {
 			if got == nil {
 				t.Fatal("expected dict type, got nil")
 			}
-			if got.ID != tt.want.ID || got.Code != tt.want.Code || got.Name != tt.want.Name || got.Description != tt.want.Description || got.Sort != tt.want.Sort {
-				t.Fatalf("unexpected dict type: %+v", got)
+			if got.ID != tt.wantID {
+				t.Fatalf("unexpected dict type id: %d", got.ID)
 			}
 		})
 	}

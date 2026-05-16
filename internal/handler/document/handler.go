@@ -1,4 +1,4 @@
-package handler
+package document
 
 import (
 	"net/http"
@@ -7,15 +7,17 @@ import (
 
 	apipb "auth_info/api/gen/api/proto"
 	bizdoc "auth_info/internal/biz/document"
+	"auth_info/internal/handler/httpx"
 )
 
-// DocumentHandler 处理文档生成相关接口
-type DocumentHandler struct {
+// Handler 处理文档生成相关接口
+type Handler struct {
 	uc *bizdoc.UseCase
 }
 
-func NewDocumentHandler(uc *bizdoc.UseCase) *DocumentHandler {
-	return &DocumentHandler{uc: uc}
+// NewHandler Wire Provider
+func NewHandler(uc *bizdoc.UseCase) *Handler {
+	return &Handler{uc: uc}
 }
 
 // GeneratePDF 生成 PDF 文档
@@ -25,15 +27,15 @@ func NewDocumentHandler(uc *bizdoc.UseCase) *DocumentHandler {
 // @Produce  application/pdf
 // @Security BearerAuth
 // @Router   /document/generate-pdf [post]
-func (h *DocumentHandler) GeneratePDF(c *gin.Context) {
+func (h *Handler) GeneratePDF(c *gin.Context) {
 	var req apipb.GeneratePDFRequest
-	if !bindAndValidateJSON(c, &req) {
+	if !httpx.BindAndValidateJSON(c, &req) {
 		return
 	}
 
 	pdfBytes, err := h.uc.GeneratePDF(c.Request.Context(), req.GetTemplateName(), structToMap(req.GetData()))
 	if err != nil {
-		writeError(c, err)
+		httpx.WriteError(c, err)
 		return
 	}
 
@@ -48,15 +50,15 @@ func (h *DocumentHandler) GeneratePDF(c *gin.Context) {
 // @Produce  application/vnd.openxmlformats-officedocument.wordprocessingml.document
 // @Security BearerAuth
 // @Router   /document/generate-word [post]
-func (h *DocumentHandler) GenerateWord(c *gin.Context) {
+func (h *Handler) GenerateWord(c *gin.Context) {
 	var req apipb.GenerateWordRequest
-	if !bindAndValidateJSON(c, &req) {
+	if !httpx.BindAndValidateJSON(c, &req) {
 		return
 	}
 
 	wordBytes, err := h.uc.GenerateWord(c.Request.Context(), req.GetTemplateName(), structToWordTemplateData(req.GetData()))
 	if err != nil {
-		writeError(c, err)
+		httpx.WriteError(c, err)
 		return
 	}
 

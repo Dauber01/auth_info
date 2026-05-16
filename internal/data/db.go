@@ -108,8 +108,9 @@ func applyMySQLPoolConfig(sqlDB *sql.DB, pool config.MySQLPoolConfig) {
 	sqlDB.SetConnMaxIdleTime(pool.ConnMaxIdleTime)
 }
 
-func RunMigrations(db *gorm.DB) error {
-	if err := db.AutoMigrate(&User{}, &DictType{}, &DictItem{}); err != nil {
+// RunMigrations 由 cmd/migrate 显式传入各模块持久化模型，避免 data 反向依赖业务包。
+func RunMigrations(db *gorm.DB, models ...any) error {
+	if err := db.AutoMigrate(models...); err != nil {
 		return fmt.Errorf("auto migrate: %w", err)
 	}
 	return nil

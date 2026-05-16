@@ -1,27 +1,10 @@
-package handler
+package document
 
 import (
-	"github.com/gin-gonic/gin"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	apipb "auth_info/api/gen/api/proto"
 	bizdoc "auth_info/internal/biz/document"
 )
-
-func writeOperationReply(c *gin.Context, status int, message string) {
-	c.JSON(status, &apipb.OperationReply{
-		Code:    int32(status),
-		Message: message,
-	})
-}
-
-func writeError(c *gin.Context, err error) {
-	if err == nil {
-		return
-	}
-	_ = c.Error(err)
-	c.Abort()
-}
 
 func structToMap(payload *structpb.Struct) map[string]any {
 	if payload == nil {

@@ -11,10 +11,15 @@ import (
 	bizhello "auth_info/internal/biz/hello"
 	"auth_info/internal/config"
 	"auth_info/internal/data"
-	"auth_info/internal/handler"
+	dataauth "auth_info/internal/data/auth"
+	datadict "auth_info/internal/data/dict"
+	authhdl "auth_info/internal/handler/auth"
+	dicthdl "auth_info/internal/handler/dict"
+	dochdl "auth_info/internal/handler/document"
+	hellohdl "auth_info/internal/handler/hello"
 	"auth_info/internal/logger"
 	"auth_info/internal/mcpserver"
-	"auth_info/internal/service"
+	hellosvc "auth_info/internal/service/hello"
 )
 
 func InitializeApp(cfg *config.Config) (*App, error) {
@@ -22,20 +27,20 @@ func InitializeApp(cfg *config.Config) (*App, error) {
 		logger.NewLogger,
 		data.NewDB,
 		data.NewEnforcer,
-		data.NewUserRepository,
-		data.NewDictRepository,
-		wire.Bind(new(bizauth.UserRepository), new(*data.UserRepo)),
-		wire.Bind(new(bizdict.DictRepository), new(*data.DictRepo)),
+		dataauth.NewUserRepository,
+		datadict.NewDictRepository,
+		wire.Bind(new(bizauth.UserRepository), new(*dataauth.UserRepo)),
+		wire.Bind(new(bizdict.DictRepository), new(*datadict.DictRepo)),
 		bizhello.NewUseCase,
 		bizauth.NewUseCase,
 		bizdict.NewUseCase,
 		bizdoc.NewUseCase,
-		handler.NewHelloHandler,
-		handler.NewAuthHandler,
-		handler.NewDictHandler,
-		handler.NewDocumentHandler,
+		hellohdl.NewHandler,
+		authhdl.NewHandler,
+		dicthdl.NewHandler,
+		dochdl.NewHandler,
 		mcpserver.NewHelloMCPHandler,
-		service.NewHelloService,
+		hellosvc.NewService,
 		wire.Struct(new(AppDeps), "*"),
 		NewApp,
 	)
