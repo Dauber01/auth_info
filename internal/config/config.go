@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/spf13/viper"
 )
 
@@ -23,12 +25,20 @@ type LogConfig struct {
 }
 
 type MySQLConfig struct {
-	Host     string `mapstructure:"host"`
-	Port     int    `mapstructure:"port"`
-	User     string `mapstructure:"user"`
-	Password string `mapstructure:"password"`
-	DBName   string `mapstructure:"dbname"`
-	Charset  string `mapstructure:"charset"`
+	Host     string          `mapstructure:"host"`
+	Port     int             `mapstructure:"port"`
+	User     string          `mapstructure:"user"`
+	Password string          `mapstructure:"password"`
+	DBName   string          `mapstructure:"dbname"`
+	Charset  string          `mapstructure:"charset"`
+	Pool     MySQLPoolConfig `mapstructure:"pool"`
+}
+
+type MySQLPoolConfig struct {
+	MaxOpenConns    int           `mapstructure:"max_open_conns"`
+	MaxIdleConns    int           `mapstructure:"max_idle_conns"`
+	ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"`
+	ConnMaxIdleTime time.Duration `mapstructure:"conn_max_idle_time"`
 }
 
 type JWTConfig struct {
