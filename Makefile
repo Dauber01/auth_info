@@ -1,4 +1,4 @@
-.PHONY: help proto wire build run clean install-tools migrate seed
+.PHONY: help proto wire build run clean install-tools install-swag migrate seed mod-tidy docs swagger test fmt lint all
 
 # 变量定义
 PROJECT_NAME := auth_info
@@ -11,6 +11,12 @@ MIGRATE_GO := cmd/migrate/main.go
 SEED_GO := cmd/seed/main.go
 OUTPUT := $(BIN_DIR)/$(PROJECT_NAME)
 CONFIG_DIR := ./config
+SWAG_VERSION := v1.16.6
+SWAG_CMD := github.com/swaggo/swag/cmd/swag@$(SWAG_VERSION)
+SWAG_DIRS := ./cmd/main,./internal/handler/auth,./internal/handler/dict,./internal/handler/document,./internal/handler/hello,./api/gen/api/proto
+GOPATH_BIN := $(shell go env GOPATH)/bin
+SWAG_BIN := $(GOPATH_BIN)/swag
+export PATH := $(GOPATH_BIN):$(PATH)
 
 # 颜色定义
 BLUE := \033[0;34m
@@ -29,6 +35,13 @@ install-tools:
 	@which protoc-gen-go > /dev/null 2>&1 || go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	@which protoc-gen-go-grpc > /dev/null 2>&1 || go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 	@echo "$(GREEN)✓ Tools installed$(NC)"
+
+## install-swag: 安装 Swagger 文档生成工具
+install-swag:
+	@if [ ! -x "$(SWAG_BIN)" ]; then \
+		echo "$(BLUE)Installing swag $(SWAG_VERSION)...$(NC)"; \
+		go install $(SWAG_CMD); \
+	fi
 
 ## proto: 生成 protobuf Go 代码
 proto: install-tools
@@ -70,7 +83,7 @@ seed: mod-tidy
 	@echo "$(GREEN)✓ Policies seeded$(NC)"
 
 ## build: 编译项目
-build: mod-tidy proto wire
+build: mod-tidy proto wire docs
 	@echo "$(BLUE)Building project...$(NC)"
 	@mkdir -p $(BIN_DIR)
 	@go build -o $(OUTPUT) $(MAIN_GO)
@@ -111,10 +124,13 @@ lint:
 	@echo "$(GREEN)✓ Lint complete$(NC)"
 
 ## docs: 生成 Swagger 文档
-docs:
+docs: install-swag
 	@echo "$(BLUE)Generating Swagger docs...$(NC)"
-	@go run github.com/swaggo/swag/cmd/swag@latest init -g cmd/main/main.go
+	@$(SWAG_BIN) init -g main.go -d $(SWAG_DIRS) --parseInternal --parseDependency
 	@echo "$(GREEN)✓ Swagger docs generated$(NC)"
+
+## swagger: docs 的别名，生成 Swagger 文档
+swagger: docs
 
 ## all: 执行所有操作（clean, proto, wire, build）
 all: clean proto wire build

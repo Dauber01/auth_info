@@ -17,6 +17,7 @@ const docTemplate = `{
     "paths": {
         "/auth/login": {
             "post": {
+                "description": "公开接口：使用用户名和密码登录，成功后返回 JWT Token。",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,11 +28,48 @@ const docTemplate = `{
                     "Auth"
                 ],
                 "summary": "登录",
-                "responses": {}
+                "parameters": [
+                    {
+                        "description": "登录参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apipb.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "登录成功",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.LoginReply"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "401": {
+                        "description": "用户名或密码错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    }
+                }
             }
         },
         "/auth/register": {
             "post": {
+                "description": "公开接口：使用用户名和密码创建新用户。",
                 "consumes": [
                     "application/json"
                 ],
@@ -42,7 +80,43 @@ const docTemplate = `{
                     "Auth"
                 ],
                 "summary": "注册",
-                "responses": {}
+                "parameters": [
+                    {
+                        "description": "注册参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apipb.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "注册成功",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "409": {
+                        "description": "用户名已存在",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    }
+                }
             }
         },
         "/dict/items": {
@@ -52,14 +126,55 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "根据字典类型编码获取字典数据，按 sort 正序返回。",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Dict"
                 ],
-                "summary": "根据类型编码获取字典数据列表",
-                "responses": {}
+                "summary": "获取字典数据列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "字典类型编码",
+                        "name": "type_code",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "请求成功",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.ListDictItemsReply"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "403": {
+                        "description": "无访问权限",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    }
+                }
             },
             "post": {
                 "security": [
@@ -67,6 +182,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "创建一个新的字典数据项，默认启用。",
                 "consumes": [
                     "application/json"
                 ],
@@ -77,7 +193,49 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "创建字典数据",
-                "responses": {}
+                "parameters": [
+                    {
+                        "description": "创建字典数据参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apipb.CreateDictItemRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "403": {
+                        "description": "无访问权限",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    }
+                }
             }
         },
         "/dict/items/{id}": {
@@ -87,6 +245,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "根据路径 ID 更新字典数据的键、值、描述、排序和状态。",
                 "consumes": [
                     "application/json"
                 ],
@@ -97,7 +256,62 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "更新字典数据",
-                "responses": {}
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "字典数据 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新字典数据参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apipb.UpdateDictItemRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "403": {
+                        "description": "无访问权限",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "404": {
+                        "description": "字典数据不存在",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    }
+                }
             },
             "delete": {
                 "security": [
@@ -105,6 +319,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "根据路径 ID 软删除字典数据。",
                 "produces": [
                     "application/json"
                 ],
@@ -112,7 +327,53 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "删除字典数据",
-                "responses": {}
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "字典数据 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "403": {
+                        "description": "无访问权限",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "404": {
+                        "description": "字典数据不存在",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    }
+                }
             }
         },
         "/dict/types": {
@@ -122,6 +383,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "获取全部字典类型，按 sort 正序返回。",
                 "produces": [
                     "application/json"
                 ],
@@ -129,7 +391,32 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "获取字典类型列表",
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "请求成功",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.ListDictTypesReply"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "403": {
+                        "description": "无访问权限",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    }
+                }
             },
             "post": {
                 "security": [
@@ -137,6 +424,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "创建一个新的字典类型，code 必须唯一。",
                 "consumes": [
                     "application/json"
                 ],
@@ -147,7 +435,55 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "创建字典类型",
-                "responses": {}
+                "parameters": [
+                    {
+                        "description": "创建字典类型参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apipb.CreateDictTypeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "403": {
+                        "description": "无访问权限",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "409": {
+                        "description": "字典类型编码已存在",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    }
+                }
             }
         },
         "/dict/types/{id}": {
@@ -157,6 +493,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "根据路径 ID 更新字典类型名称、描述和排序，code 不可修改。",
                 "consumes": [
                     "application/json"
                 ],
@@ -167,7 +504,62 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "更新字典类型",
-                "responses": {}
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "字典类型 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新字典类型参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apipb.UpdateDictTypeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "403": {
+                        "description": "无访问权限",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "404": {
+                        "description": "字典类型不存在",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    }
+                }
             },
             "delete": {
                 "security": [
@@ -175,6 +567,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "根据路径 ID 软删除字典类型。",
                 "produces": [
                     "application/json"
                 ],
@@ -182,7 +575,53 @@ const docTemplate = `{
                     "Dict"
                 ],
                 "summary": "删除字典类型",
-                "responses": {}
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "字典类型 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "403": {
+                        "description": "无访问权限",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "404": {
+                        "description": "字典类型不存在",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    }
+                }
             }
         },
         "/document/generate-pdf": {
@@ -192,6 +631,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "根据模板名称和数据生成 PDF 文件。",
                 "consumes": [
                     "application/json"
                 ],
@@ -202,7 +642,55 @@ const docTemplate = `{
                     "Document"
                 ],
                 "summary": "生成 PDF 文档",
-                "responses": {}
+                "parameters": [
+                    {
+                        "description": "生成 PDF 参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apipb.GeneratePDFRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PDF 文件",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "403": {
+                        "description": "无访问权限",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "404": {
+                        "description": "模板不存在",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    }
+                }
             }
         },
         "/document/generate-word": {
@@ -212,6 +700,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "根据模板名称和数据生成 Word 文档文件。",
                 "consumes": [
                     "application/json"
                 ],
@@ -222,7 +711,55 @@ const docTemplate = `{
                     "Document"
                 ],
                 "summary": "生成 Word 文档",
-                "responses": {}
+                "parameters": [
+                    {
+                        "description": "生成 Word 参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apipb.GenerateWordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Word 文档文件",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "401": {
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "403": {
+                        "description": "无访问权限",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "404": {
+                        "description": "模板不存在",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    }
+                }
             }
         },
         "/hello": {
@@ -253,13 +790,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "请求成功",
                         "schema": {
                             "$ref": "#/definitions/apipb.HelloReply"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "未认证",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "403": {
+                        "description": "无访问权限",
+                        "schema": {
+                            "$ref": "#/definitions/apipb.OperationReply"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
                         "schema": {
                             "$ref": "#/definitions/apipb.OperationReply"
                         }
@@ -269,6 +818,111 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "apipb.CreateDictItemRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "item_key": {
+                    "type": "string"
+                },
+                "item_value": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "type_code": {
+                    "type": "string"
+                }
+            }
+        },
+        "apipb.CreateDictTypeRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                }
+            }
+        },
+        "apipb.DictItem": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "item_key": {
+                    "type": "string"
+                },
+                "item_value": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "type_code": {
+                    "type": "string"
+                }
+            }
+        },
+        "apipb.DictType": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                }
+            }
+        },
+        "apipb.GeneratePDFRequest": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/structpb.Struct"
+                },
+                "template_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "apipb.GenerateWordRequest": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/structpb.Struct"
+                },
+                "template_name": {
+                    "type": "string"
+                }
+            }
+        },
         "apipb.HelloData": {
             "type": "object",
             "properties": {
@@ -291,6 +945,73 @@ const docTemplate = `{
                 }
             }
         },
+        "apipb.ListDictItemsReply": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apipb.DictItem"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "apipb.ListDictTypesReply": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apipb.DictType"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "apipb.LoginData": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "apipb.LoginReply": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/apipb.LoginData"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "apipb.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "apipb.OperationReply": {
             "type": "object",
             "properties": {
@@ -299,6 +1020,77 @@ const docTemplate = `{
                 },
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "apipb.RegisterRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "apipb.UpdateDictItemRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "item_key": {
+                    "type": "string"
+                },
+                "item_value": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "apipb.UpdateDictTypeRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                }
+            }
+        },
+        "structpb.Struct": {
+            "type": "object",
+            "properties": {
+                "fields": {
+                    "description": "Unordered map of dynamically typed values.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/structpb.Value"
+                    }
+                }
+            }
+        },
+        "structpb.Value": {
+            "type": "object",
+            "properties": {
+                "kind": {
+                    "description": "The kind of value.\n\nTypes that are valid to be assigned to Kind:\n\n\t*Value_NullValue\n\t*Value_NumberValue\n\t*Value_StringValue\n\t*Value_BoolValue\n\t*Value_StructValue\n\t*Value_ListValue"
                 }
             }
         }

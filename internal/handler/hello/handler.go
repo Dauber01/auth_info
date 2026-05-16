@@ -27,8 +27,10 @@ func NewHandler(uc *bizhello.UseCase) *Handler {
 // @Accept json
 // @Produce json
 // @Param name query string false "名字"
-// @Success 200 {object} apipb.HelloReply
-// @Failure 401 {object} apipb.OperationReply
+// @Success 200 {object} apipb.HelloReply "请求成功"
+// @Failure 401 {object} apipb.OperationReply "未认证"
+// @Failure 403 {object} apipb.OperationReply "无访问权限"
+// @Failure 500 {object} apipb.OperationReply "服务器内部错误"
 // @Security BearerAuth
 // @Router /hello [get]
 func (h *Handler) Hello(c *gin.Context) {

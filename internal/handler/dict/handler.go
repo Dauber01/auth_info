@@ -22,9 +22,14 @@ func NewHandler(uc *bizdict.UseCase) *Handler {
 }
 
 // ListDictTypes
-// @Summary  List dictionary types
+// @Summary  获取字典类型列表
+// @Description 获取全部字典类型，按 sort 正序返回。
 // @Tags     Dict
 // @Produce  json
+// @Success  200 {object} apipb.ListDictTypesReply "请求成功"
+// @Failure  401 {object} apipb.OperationReply "未认证"
+// @Failure  403 {object} apipb.OperationReply "无访问权限"
+// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
 // @Security BearerAuth
 // @Router   /dict/types [get]
 func (h *Handler) ListDictTypes(c *gin.Context) {
@@ -42,10 +47,18 @@ func (h *Handler) ListDictTypes(c *gin.Context) {
 }
 
 // CreateDictType
-// @Summary  Create dictionary type
+// @Summary  创建字典类型
+// @Description 创建一个新的字典类型，code 必须唯一。
 // @Tags     Dict
 // @Accept   json
 // @Produce  json
+// @Param    request body apipb.CreateDictTypeRequest true "创建字典类型参数"
+// @Success  200 {object} apipb.OperationReply "创建成功"
+// @Failure  400 {object} apipb.OperationReply "请求参数错误"
+// @Failure  401 {object} apipb.OperationReply "未认证"
+// @Failure  403 {object} apipb.OperationReply "无访问权限"
+// @Failure  409 {object} apipb.OperationReply "字典类型编码已存在"
+// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
 // @Security BearerAuth
 // @Router   /dict/types [post]
 func (h *Handler) CreateDictType(c *gin.Context) {
@@ -63,10 +76,19 @@ func (h *Handler) CreateDictType(c *gin.Context) {
 }
 
 // UpdateDictType
-// @Summary  Update dictionary type
+// @Summary  更新字典类型
+// @Description 根据路径 ID 更新字典类型名称、描述和排序，code 不可修改。
 // @Tags     Dict
 // @Accept   json
 // @Produce  json
+// @Param    id path int true "字典类型 ID"
+// @Param    request body apipb.UpdateDictTypeRequest true "更新字典类型参数"
+// @Success  200 {object} apipb.OperationReply "更新成功"
+// @Failure  400 {object} apipb.OperationReply "请求参数错误"
+// @Failure  401 {object} apipb.OperationReply "未认证"
+// @Failure  403 {object} apipb.OperationReply "无访问权限"
+// @Failure  404 {object} apipb.OperationReply "字典类型不存在"
+// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
 // @Security BearerAuth
 // @Router   /dict/types/{id} [put]
 func (h *Handler) UpdateDictType(c *gin.Context) {
@@ -86,9 +108,17 @@ func (h *Handler) UpdateDictType(c *gin.Context) {
 }
 
 // DeleteDictType
-// @Summary  Delete dictionary type
+// @Summary  删除字典类型
+// @Description 根据路径 ID 软删除字典类型。
 // @Tags     Dict
 // @Produce  json
+// @Param    id path int true "字典类型 ID"
+// @Success  200 {object} apipb.OperationReply "删除成功"
+// @Failure  400 {object} apipb.OperationReply "请求参数错误"
+// @Failure  401 {object} apipb.OperationReply "未认证"
+// @Failure  403 {object} apipb.OperationReply "无访问权限"
+// @Failure  404 {object} apipb.OperationReply "字典类型不存在"
+// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
 // @Security BearerAuth
 // @Router   /dict/types/{id} [delete]
 func (h *Handler) DeleteDictType(c *gin.Context) {
@@ -108,9 +138,16 @@ func (h *Handler) DeleteDictType(c *gin.Context) {
 }
 
 // ListDictItems
-// @Summary  List dictionary items by type code
+// @Summary  获取字典数据列表
+// @Description 根据字典类型编码获取字典数据，按 sort 正序返回。
 // @Tags     Dict
 // @Produce  json
+// @Param    type_code query string true "字典类型编码"
+// @Success  200 {object} apipb.ListDictItemsReply "请求成功"
+// @Failure  400 {object} apipb.OperationReply "请求参数错误"
+// @Failure  401 {object} apipb.OperationReply "未认证"
+// @Failure  403 {object} apipb.OperationReply "无访问权限"
+// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
 // @Security BearerAuth
 // @Router   /dict/items [get]
 func (h *Handler) ListDictItems(c *gin.Context) {
@@ -133,10 +170,17 @@ func (h *Handler) ListDictItems(c *gin.Context) {
 }
 
 // CreateDictItem
-// @Summary  Create dictionary item
+// @Summary  创建字典数据
+// @Description 创建一个新的字典数据项，默认启用。
 // @Tags     Dict
 // @Accept   json
 // @Produce  json
+// @Param    request body apipb.CreateDictItemRequest true "创建字典数据参数"
+// @Success  200 {object} apipb.OperationReply "创建成功"
+// @Failure  400 {object} apipb.OperationReply "请求参数错误"
+// @Failure  401 {object} apipb.OperationReply "未认证"
+// @Failure  403 {object} apipb.OperationReply "无访问权限"
+// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
 // @Security BearerAuth
 // @Router   /dict/items [post]
 func (h *Handler) CreateDictItem(c *gin.Context) {
@@ -154,10 +198,19 @@ func (h *Handler) CreateDictItem(c *gin.Context) {
 }
 
 // UpdateDictItem
-// @Summary  Update dictionary item
+// @Summary  更新字典数据
+// @Description 根据路径 ID 更新字典数据的键、值、描述、排序和状态。
 // @Tags     Dict
 // @Accept   json
 // @Produce  json
+// @Param    id path int true "字典数据 ID"
+// @Param    request body apipb.UpdateDictItemRequest true "更新字典数据参数"
+// @Success  200 {object} apipb.OperationReply "更新成功"
+// @Failure  400 {object} apipb.OperationReply "请求参数错误"
+// @Failure  401 {object} apipb.OperationReply "未认证"
+// @Failure  403 {object} apipb.OperationReply "无访问权限"
+// @Failure  404 {object} apipb.OperationReply "字典数据不存在"
+// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
 // @Security BearerAuth
 // @Router   /dict/items/{id} [put]
 func (h *Handler) UpdateDictItem(c *gin.Context) {
@@ -177,9 +230,17 @@ func (h *Handler) UpdateDictItem(c *gin.Context) {
 }
 
 // DeleteDictItem
-// @Summary  Delete dictionary item
+// @Summary  删除字典数据
+// @Description 根据路径 ID 软删除字典数据。
 // @Tags     Dict
 // @Produce  json
+// @Param    id path int true "字典数据 ID"
+// @Success  200 {object} apipb.OperationReply "删除成功"
+// @Failure  400 {object} apipb.OperationReply "请求参数错误"
+// @Failure  401 {object} apipb.OperationReply "未认证"
+// @Failure  403 {object} apipb.OperationReply "无访问权限"
+// @Failure  404 {object} apipb.OperationReply "字典数据不存在"
+// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
 // @Security BearerAuth
 // @Router   /dict/items/{id} [delete]
 func (h *Handler) DeleteDictItem(c *gin.Context) {
