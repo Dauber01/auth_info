@@ -31,11 +31,6 @@ go.work
 .vscode/settings.local.json
 .vscode/.history/
 
-# AI assistant local files
-.agents/
-.codex/
-AGENTS.md
-
 # Dependencies
 vendor/
 
@@ -56,5 +51,4 @@ coverage.html
 
 # IDE workspace files
 *.code-workspace
-
 
