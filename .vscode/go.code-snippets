@@ -2,16 +2,9 @@
   "Go Handler Function": {
     "prefix": "handler",
     "body": [
-      "// ${1:FunctionName}",
-      "// @Summary ${2:简要描述}",
-      "// @Description ${3:详细描述}",
-      "// @Tags ${4:Tag}",
-      "// @Accept json",
-      "// @Produce json",
-      "// @Success 200 {object} map[string]interface{}",
-      "// @Router /${5:path} [${6:get}]",
-      "func (h *${7:Handler}) ${1:FunctionName}(c *gin.Context) {",
-      "\t${8:// TODO: 实现逻辑}",
+      "// ${1:FunctionName} ${2:函数描述}",
+      "func (h *${3:Handler}) ${1:FunctionName}(c *gin.Context) {",
+      "\t${4:// TODO: 实现逻辑}",
       "\tc.JSON(http.StatusOK, gin.H{",
       "\t\t\"code\":    http.StatusOK,",
       "\t\t\"message\": \"success\",",
@@ -19,7 +12,7 @@
       "\t})",
       "}"
     ],
-    "description": "创建 Gin Handler 函数（带 Swagger 注释）"
+    "description": "创建 Gin Handler 函数"
   },
   "Go Service Function": {
     "prefix": "service",

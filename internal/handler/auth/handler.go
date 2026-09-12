@@ -20,18 +20,7 @@ func NewHandler(uc *bizauth.UseCase) *Handler {
 	return &Handler{uc: uc}
 }
 
-// Register
-// @Summary 注册
-// @Description 公开接口：使用用户名和密码创建新用户。
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param request body apipb.RegisterRequest true "注册参数"
-// @Success 200 {object} apipb.OperationReply "注册成功"
-// @Failure 400 {object} apipb.OperationReply "请求参数错误"
-// @Failure 409 {object} apipb.OperationReply "用户名已存在"
-// @Failure 500 {object} apipb.OperationReply "服务器内部错误"
-// @Router /auth/register [post]
+// Register 注册
 func (h *Handler) Register(c *gin.Context) {
 	var req apipb.RegisterRequest
 	if !httpx.BindAndValidateJSON(c, &req) {
@@ -46,18 +35,7 @@ func (h *Handler) Register(c *gin.Context) {
 	httpx.WriteOperationReply(c, http.StatusOK, "registered successfully")
 }
 
-// Login
-// @Summary 登录
-// @Description 公开接口：使用用户名和密码登录，成功后返回 JWT Token。
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param request body apipb.LoginRequest true "登录参数"
-// @Success 200 {object} apipb.LoginReply "登录成功"
-// @Failure 400 {object} apipb.OperationReply "请求参数错误"
-// @Failure 401 {object} apipb.OperationReply "用户名或密码错误"
-// @Failure 500 {object} apipb.OperationReply "服务器内部错误"
-// @Router /auth/login [post]
+// Login 登录
 func (h *Handler) Login(c *gin.Context) {
 	var req apipb.LoginRequest
 	if !httpx.BindAndValidateJSON(c, &req) {

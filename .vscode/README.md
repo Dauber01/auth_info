@@ -46,7 +46,7 @@
 
 ### 5. go.code-snippets
 Go 代码片段：
-- `handler` - 创建 Gin Handler（带 Swagger 注释）
+- `handler` - 创建 Gin Handler
 - `service` - 创建 Service 函数
 - `test` - 创建表驱动测试
 - `iferr` - 错误检查

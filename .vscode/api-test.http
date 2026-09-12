@@ -11,11 +11,6 @@ Content-Type: application/json
 
 ###
 
-### 测试 Swagger 文档
-GET {{baseUrl}}/swagger/index.html HTTP/1.1
-
-###
-
 ### 测试健康检查（待实现）
 GET {{baseUrl}}/health HTTP/1.1
 

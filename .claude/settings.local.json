@@ -25,7 +25,6 @@
       "Bash(~/go/bin/protoc-gen-go --version)",
       "Bash(~/go/bin/protoc-gen-go-grpc --version)",
       "Bash(~/go/bin/wire help *)",
-      "Bash(~/go/bin/swag --version)",
       "Bash(~/go/bin/gopls version *)",
       "Bash(~/go/bin/golangci-lint --version)",
       "Bash(~/go/bin/air -v)",

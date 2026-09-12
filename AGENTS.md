@@ -24,14 +24,11 @@ make seed             # 初始化 Casbin 默认策略（cmd/seed，首次部署�
 make fmt              # go fmt 格式化
 make lint             # go vet 静态分析
 make test             # go test -v ./...（运行全部测试）
-make docs             # 从代码注解生成 Swagger 文档
-make swagger          # make docs 的别名
 ```
 
 运行后访问：
 - HTTP API：`http://localhost:8080`
 - gRPC：`localhost:9080`（= HTTP port + 1000）
-- Swagger UI：`http://localhost:8080/swagger/index.html`
 
 ## 架构概览
 
@@ -74,7 +71,7 @@ apperr.Wrap(apperr.CodeInternal, "db query failed", err)
 
 ## Go 代码规范
 
-以下规则适用于所有手写 Go 代码。自动生成文件（如 `*.pb.go`、`wire_gen.go`、`docs/docs.go`）不适用，且禁止手动修改。
+以下规则适用于所有手写 Go 代码。自动生成文件（如 `*.pb.go`、`wire_gen.go`）不适用，且禁止手动修改。
 
 ### 格式与行宽
 
@@ -154,7 +151,7 @@ logger.Error(
 - 修复 bug 时优先先添加可复现测试，再实现修复。
 - 新业务逻辑至少覆盖成功、参数非法、资源不存在以及关键依赖失败路径。
 - 测试应确定性执行，不依赖真实时间、随机网络、共享数据库或执行顺序。
-- 修改 `.proto` 后运行 `make proto`；修改 `wire.go` 后运行 `make wire`；修改 HTTP 接口或 Swagger 注解后运行 `make swagger`。
+- 修改 `.proto` 后运行 `make proto`；修改 `wire.go` 后运行 `make wire`。
 - 提交前至少运行受影响包测试、`make fmt` 和 `make lint`；共享行为或跨模块改动应运行 `make test`。
 - 不通过降低断言、跳过测试或吞掉错误来让检查通过。
 

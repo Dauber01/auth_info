@@ -11,8 +11,6 @@ import (
 
 	"github.com/casbin/casbin/v3"
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
@@ -70,7 +68,6 @@ func NewApp(
 	engine.Use(gin.Recovery())
 	engine.Use(middleware.ErrorHandler(log))
 
-	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	engine.Any("/mcp", gin.WrapH(deps.HelloMCPHandler))
 
 	api := engine.Group("/api/v1")

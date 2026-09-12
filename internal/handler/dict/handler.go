@@ -21,17 +21,7 @@ func NewHandler(uc *bizdict.UseCase) *Handler {
 	return &Handler{uc: uc}
 }
 
-// ListDictTypes
-// @Summary  获取字典类型列表
-// @Description 获取全部字典类型，按 sort 正序返回。
-// @Tags     Dict
-// @Produce  json
-// @Success  200 {object} apipb.ListDictTypesReply "请求成功"
-// @Failure  401 {object} apipb.OperationReply "未认证"
-// @Failure  403 {object} apipb.OperationReply "无访问权限"
-// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
-// @Security BearerAuth
-// @Router   /dict/types [get]
+// ListDictTypes 获取字典类型列表
 func (h *Handler) ListDictTypes(c *gin.Context) {
 	types, err := h.uc.ListDictTypes(c.Request.Context())
 	if err != nil {
@@ -46,21 +36,7 @@ func (h *Handler) ListDictTypes(c *gin.Context) {
 	})
 }
 
-// CreateDictType
-// @Summary  创建字典类型
-// @Description 创建一个新的字典类型，code 必须唯一。
-// @Tags     Dict
-// @Accept   json
-// @Produce  json
-// @Param    request body apipb.CreateDictTypeRequest true "创建字典类型参数"
-// @Success  200 {object} apipb.OperationReply "创建成功"
-// @Failure  400 {object} apipb.OperationReply "请求参数错误"
-// @Failure  401 {object} apipb.OperationReply "未认证"
-// @Failure  403 {object} apipb.OperationReply "无访问权限"
-// @Failure  409 {object} apipb.OperationReply "字典类型编码已存在"
-// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
-// @Security BearerAuth
-// @Router   /dict/types [post]
+// CreateDictType 创建字典类型
 func (h *Handler) CreateDictType(c *gin.Context) {
 	var req apipb.CreateDictTypeRequest
 	if !httpx.BindAndValidateJSON(c, &req) {
@@ -75,22 +51,7 @@ func (h *Handler) CreateDictType(c *gin.Context) {
 	httpx.WriteOperationReply(c, http.StatusOK, "created successfully")
 }
 
-// UpdateDictType
-// @Summary  更新字典类型
-// @Description 根据路径 ID 更新字典类型名称、描述和排序，code 不可修改。
-// @Tags     Dict
-// @Accept   json
-// @Produce  json
-// @Param    id path int true "字典类型 ID"
-// @Param    request body apipb.UpdateDictTypeRequest true "更新字典类型参数"
-// @Success  200 {object} apipb.OperationReply "更新成功"
-// @Failure  400 {object} apipb.OperationReply "请求参数错误"
-// @Failure  401 {object} apipb.OperationReply "未认证"
-// @Failure  403 {object} apipb.OperationReply "无访问权限"
-// @Failure  404 {object} apipb.OperationReply "字典类型不存在"
-// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
-// @Security BearerAuth
-// @Router   /dict/types/{id} [put]
+// UpdateDictType 更新字典类型
 func (h *Handler) UpdateDictType(c *gin.Context) {
 	var req apipb.UpdateDictTypeRequest
 	if !httpx.BindPathIDAndValidateJSON(c, "id", &req, func(id uint64) {
@@ -107,20 +68,7 @@ func (h *Handler) UpdateDictType(c *gin.Context) {
 	httpx.WriteOperationReply(c, http.StatusOK, "updated successfully")
 }
 
-// DeleteDictType
-// @Summary  删除字典类型
-// @Description 根据路径 ID 软删除字典类型。
-// @Tags     Dict
-// @Produce  json
-// @Param    id path int true "字典类型 ID"
-// @Success  200 {object} apipb.OperationReply "删除成功"
-// @Failure  400 {object} apipb.OperationReply "请求参数错误"
-// @Failure  401 {object} apipb.OperationReply "未认证"
-// @Failure  403 {object} apipb.OperationReply "无访问权限"
-// @Failure  404 {object} apipb.OperationReply "字典类型不存在"
-// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
-// @Security BearerAuth
-// @Router   /dict/types/{id} [delete]
+// DeleteDictType 删除字典类型
 func (h *Handler) DeleteDictType(c *gin.Context) {
 	req := apipb.DeleteDictTypeRequest{}
 	if !httpx.ValidatePathIDRequest(c, "id", &req, func(id uint64) {
@@ -137,19 +85,7 @@ func (h *Handler) DeleteDictType(c *gin.Context) {
 	httpx.WriteOperationReply(c, http.StatusOK, "deleted successfully")
 }
 
-// ListDictItems
-// @Summary  获取字典数据列表
-// @Description 根据字典类型编码获取字典数据，按 sort 正序返回。
-// @Tags     Dict
-// @Produce  json
-// @Param    type_code query string true "字典类型编码"
-// @Success  200 {object} apipb.ListDictItemsReply "请求成功"
-// @Failure  400 {object} apipb.OperationReply "请求参数错误"
-// @Failure  401 {object} apipb.OperationReply "未认证"
-// @Failure  403 {object} apipb.OperationReply "无访问权限"
-// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
-// @Security BearerAuth
-// @Router   /dict/items [get]
+// ListDictItems 获取字典数据列表
 func (h *Handler) ListDictItems(c *gin.Context) {
 	req := apipb.ListDictItemsRequest{TypeCode: strings.TrimSpace(c.Query("type_code"))}
 	if !httpx.ValidateProto(c, &req) {
@@ -169,20 +105,7 @@ func (h *Handler) ListDictItems(c *gin.Context) {
 	})
 }
 
-// CreateDictItem
-// @Summary  创建字典数据
-// @Description 创建一个新的字典数据项，默认启用。
-// @Tags     Dict
-// @Accept   json
-// @Produce  json
-// @Param    request body apipb.CreateDictItemRequest true "创建字典数据参数"
-// @Success  200 {object} apipb.OperationReply "创建成功"
-// @Failure  400 {object} apipb.OperationReply "请求参数错误"
-// @Failure  401 {object} apipb.OperationReply "未认证"
-// @Failure  403 {object} apipb.OperationReply "无访问权限"
-// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
-// @Security BearerAuth
-// @Router   /dict/items [post]
+// CreateDictItem 创建字典数据
 func (h *Handler) CreateDictItem(c *gin.Context) {
 	var req apipb.CreateDictItemRequest
 	if !httpx.BindAndValidateJSON(c, &req) {
@@ -197,22 +120,7 @@ func (h *Handler) CreateDictItem(c *gin.Context) {
 	httpx.WriteOperationReply(c, http.StatusOK, "created successfully")
 }
 
-// UpdateDictItem
-// @Summary  更新字典数据
-// @Description 根据路径 ID 更新字典数据的键、值、描述、排序和状态。
-// @Tags     Dict
-// @Accept   json
-// @Produce  json
-// @Param    id path int true "字典数据 ID"
-// @Param    request body apipb.UpdateDictItemRequest true "更新字典数据参数"
-// @Success  200 {object} apipb.OperationReply "更新成功"
-// @Failure  400 {object} apipb.OperationReply "请求参数错误"
-// @Failure  401 {object} apipb.OperationReply "未认证"
-// @Failure  403 {object} apipb.OperationReply "无访问权限"
-// @Failure  404 {object} apipb.OperationReply "字典数据不存在"
-// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
-// @Security BearerAuth
-// @Router   /dict/items/{id} [put]
+// UpdateDictItem 更新字典数据
 func (h *Handler) UpdateDictItem(c *gin.Context) {
 	var req apipb.UpdateDictItemRequest
 	if !httpx.BindPathIDAndValidateJSON(c, "id", &req, func(id uint64) {
@@ -229,20 +137,7 @@ func (h *Handler) UpdateDictItem(c *gin.Context) {
 	httpx.WriteOperationReply(c, http.StatusOK, "updated successfully")
 }
 
-// DeleteDictItem
-// @Summary  删除字典数据
-// @Description 根据路径 ID 软删除字典数据。
-// @Tags     Dict
-// @Produce  json
-// @Param    id path int true "字典数据 ID"
-// @Success  200 {object} apipb.OperationReply "删除成功"
-// @Failure  400 {object} apipb.OperationReply "请求参数错误"
-// @Failure  401 {object} apipb.OperationReply "未认证"
-// @Failure  403 {object} apipb.OperationReply "无访问权限"
-// @Failure  404 {object} apipb.OperationReply "字典数据不存在"
-// @Failure  500 {object} apipb.OperationReply "服务器内部错误"
-// @Security BearerAuth
-// @Router   /dict/items/{id} [delete]
+// DeleteDictItem 删除字典数据
 func (h *Handler) DeleteDictItem(c *gin.Context) {
 	req := apipb.DeleteDictItemRequest{}
 	if !httpx.ValidatePathIDRequest(c, "id", &req, func(id uint64) {

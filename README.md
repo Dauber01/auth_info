@@ -11,7 +11,6 @@
 - gRPC Gateway（REST API 映射）
 - Viper 配置管理
 - Zap 结构化日志
-- Swagger API 文档
 - 错误处理中间件
 - 优雅关闭机制
 - Makefile 工作流自动化
@@ -40,7 +39,6 @@
 │   │   └── third_party/google/  # 第三方 protobuf 依赖
 │   └── gen/                     # 生成的 Proto 代码
 ├── config/                      # 配置文件
-├── docs/                        # Swagger 文档
 ├── Makefile                     # 构建脚本
 └── go.mod                       # Go 模块定义
 ```
@@ -104,9 +102,6 @@ make fmt
 # 代码检查
 make lint
 
-# 生成 Swagger 文档
-make docs
-
 # 执行所有操作（clean, proto, wire, build）
 make all
 ```
@@ -157,9 +152,6 @@ log:
 ```bash
 # Hello 接口
 curl http://localhost:8080/api/v1/hello
-
-# Swagger 文档
-open http://localhost:8080/swagger/index.html
 ```
 
 ### gRPC 服务
