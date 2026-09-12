@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "files": {
+    ".agents/framework/README.md": "sha256:03183c79c5e7cfb44fa824c9dba784617e5d4452046db1fe32b0684251d545d2",
+    ".agents/framework/VERSION": "sha256:e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67",
+    ".agents/framework/agents/log-analyzer.md": "sha256:132685309577223020cbde34cc0ba875cfc7b4d6ac55adc71fdd75d1101ce7bd",
+    ".agents/framework/agents/test-runner.md": "sha256:e14afc6020d23dcebd3b7227219fc8a2ac568f6f0667bb8645c91909e48a71e1",
+    ".agents/framework/defaults.json": "sha256:ef5543ce90022e832e9fdb127593f54720e4767963bdaf6f80339c0b2da9bc3b",
+    ".agents/framework/harness.py": "sha256:f27a8e3ebd8c8fe2681e297f27f3fcdf7085b78e85a48e6dc1aa78dd2e4a12fc",
+    ".agents/framework/instructions.md": "sha256:be1cbac18c6c7dafd28b3fb9dbe672630697ae7f3b26a42eee2ba2a697ef6346",
+    ".agents/framework/skills/bilibili-transcript/SKILL.md": "sha256:d7425f6dde483b036033b9f5575eb3198a2a037334ef6a6cca0a938cf08bda29",
+    ".agents/framework/skills/financial-analyzing/SKILL.md": "sha256:14397df6d17e0c10319e51328a0a835e729b2db22fe630e3a8b646e8755ec114",
+    ".agents/framework/skills/financial-analyzing/reference/analysis_report.md": "sha256:62c746ab2420a4b9aa2b3b23420a548b9de47013de0a0e70489417324c392df9",
+    ".agents/framework/skills/financial-analyzing/reference/costs.md": "sha256:2a72b8891b8ad678a586aa03092abd7b745436f4075ab8b31cc229b865f7a83a",
+    ".agents/framework/skills/financial-analyzing/reference/profitability.md": "sha256:3aa020d45cab0bb38c07aa580e87bb78b3686dce13560b5a0be8a798df83cf12",
+    ".agents/framework/skills/financial-analyzing/reference/revenue.md": "sha256:e6d83f53524503680b731a78508fa138f383bc3a2a7edde564a5fb60f78b77c6",
+    ".agents/framework/skills/financial-analyzing/scripts/calculate_ratios.py": "sha256:7bc4fc38f7b9f6ef2e85deb4b52443394378e6c96abd5ea16286037727a27e34",
+    ".agents/framework/skills/financial-analyzing/templates/analysis_report.md": "sha256:62c746ab2420a4b9aa2b3b23420a548b9de47013de0a0e70489417324c392df9",
+    ".agents/framework/skills/maintain-knowledge/SKILL.md": "sha256:5fd6b5fcb7fcb94fe733eb122a203b7616a4e7ffcdea89407edacca93177ea96",
+    ".agents/framework/skills/maintain-knowledge/references/protocol.md": "sha256:f03ae8a0446a8e7da45a218a034b26cdd6ca8c430d46a7c087081d71a77d306f",
+    ".agents/framework/templates/project/config.json": "sha256:c1464570e10d55018dd635d18929c18fe3a8d7592e7e0ebd61fabd1bd160fb79",
+    ".agents/framework/templates/project/context.md": "sha256:74912de76e11ee5ecf156014819508775c44a8fd297998190fc3dd45b51d9fcb",
+    ".agents/framework/templates/project/index.md": "sha256:3e3fa32df3345678739c7e7f262dc5cef2f2ce336be4b16942fb3d2757ec24c6",
+    ".agents/framework/templates/project/onboarding.md": "sha256:a128c4a42f21a280c41b5e54a1403ce6c3471d480818dcd4f554ed1e17735a4f",
+    ".agents/framework/tests/test_harness.py": "sha256:61c4abf37a4a9ee52c26d1ad78211c6a10179bfbc0e46da8f21b555a1d7cbc4d"
+  }
+}

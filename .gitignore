@@ -31,6 +31,12 @@ go.work
 .vscode/settings.local.json
 .vscode/.history/
 
+# Harness personal overrides
+.claude/settings.local.json
+
+# Python helper caches
+__pycache__/
+
 # Dependencies
 vendor/
 
@@ -52,3 +58,5 @@ coverage.html
 # IDE workspace files
 *.code-workspace
 
+# Local CodeGraph index
+.codegraph/

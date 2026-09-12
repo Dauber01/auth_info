@@ -1,4 +1,4 @@
-.PHONY: help proto wire build run clean install-tools migrate seed mod-tidy test fmt lint all
+.PHONY: help proto wire build run clean install-tools migrate seed mod-tidy test fmt lint all sync-harness check-harness
 
 # 变量定义
 PROJECT_NAME := auth_info
@@ -11,6 +11,7 @@ MIGRATE_GO := cmd/migrate/main.go
 SEED_GO := cmd/seed/main.go
 OUTPUT := $(BIN_DIR)/$(PROJECT_NAME)
 CONFIG_DIR := ./config
+PYTHON ?= python3
 GOPATH_BIN := $(shell go env GOPATH)/bin
 export PATH := $(GOPATH_BIN):$(PATH)
 
@@ -23,6 +24,15 @@ NC := \033[0m # No Color
 help:
 	@echo "$(BLUE)Available commands:$(NC)"
 	@grep -E '##' Makefile | grep -v grep | sed 's/## //' | awk '{print "  $(GREEN)" $$1 "$(NC) " substr($$0, index($$0, $$2))}'
+
+## sync-harness: 同步 Codex 和 Claude Code 项目配置
+sync-harness:
+	@$(PYTHON) .agents/framework/harness.py sync --root .
+
+## check-harness: 检查双 harness 配置和共享 skills
+check-harness:
+	@$(PYTHON) .agents/framework/harness.py check --root .
+	@$(PYTHON) -B -m unittest discover -s .agents/framework/tests
 
 ## install-tools: 安装 protoc, protoc-gen-go, protoc-gen-go-grpc 工具
 install-tools:

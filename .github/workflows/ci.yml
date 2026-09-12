@@ -20,6 +20,9 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Check Harness Configuration
+        run: make check-harness
+
       - name: Check Formatting
         run: |
           FILES=$(git ls-files '*.go')

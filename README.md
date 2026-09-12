@@ -4,6 +4,31 @@
 
 ## 项目特性
 
+项目支持 Codex 和 Claude Code，共用生成的 [AGENTS.md](AGENTS.md) 入口。
+[通用 Agent 框架](.agents/framework/README.md) 可整体抽离为独立仓库，复制注入其他项目并显式升级；
+[项目知识库](.agents/project/index.md) 单独维护本项目的开发规范、架构、接口与验证记录。
+Skills 通过 `.agents/skills/` 与 `.claude/skills` 软链接共用唯一正文；
+agent、MCP 和团队设置由通用默认值与 `.agents/project/config.json` 生成各自原生格式。
+
+首次克隆或修改 harness 配置后运行（需要 Python 3.9+，无额外 Python 依赖）：
+
+```bash
+make sync-harness
+make check-harness
+```
+
+两种 CLI 均从仓库根目录启动。CodeGraph 需预装并加入 PATH；同步不会安装工具或创建索引。
+Windows 使用者需启用符号链接支持。新增 skill、agent、hook 前请阅读 `AGENTS.md` 的兼容约定。
+个人设置保留在 `.claude/settings.local.json` 或用户级 Codex 配置中，不进入团队配置。
+
+向其他项目注入前可预览变更：
+
+```bash
+python3 .agents/framework/harness.py install --target /path/to/project --dry-run
+```
+
+注入提供规范、适配器和知识维护流程；新项目的详细知识需要根据其源码采集，不能复用本项目事实。
+
 ✅ **已实现：**
 - Gin Web 框架（REST API）
 - Google Wire 依赖注入

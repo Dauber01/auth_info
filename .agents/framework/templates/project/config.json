@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "agents": [],
+  "disabled_agents": [],
+  "skills": ["maintain-knowledge"],
+  "mcp_servers": {},
+  "claude_settings": {},
+  "codex_settings": {},
+  "codex_hooks": {}
+}

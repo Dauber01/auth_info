@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "files": {
+    ".agents/skills/bilibili-transcript": "link:../framework/skills/bilibili-transcript",
+    ".agents/skills/financial-analyzing": "link:../framework/skills/financial-analyzing",
+    ".agents/skills/maintain-knowledge": "link:../framework/skills/maintain-knowledge",
+    ".claude/agents/log-analyzer.md": "sha256:cbd1354dd14e4fdf6d833a49d14d248db0ac3da923e66afa5e01ee412fa6f9f9",
+    ".claude/agents/test-runner.md": "sha256:a6508bcf0e089e2baabae07ab9da97daa4ae8a2efa35fd89cb55b22ce46c8b32",
+    ".claude/settings.json": "sha256:0d35e7814ff4a731a2d4c0aab6f3d589278c7cc1427e29b17582903779c7c878",
+    ".claude/skills": "link:../.agents/skills",
+    ".codex/agents/log-analyzer.toml": "sha256:61572f4721314258ec1d7b680771f8f96b430a193c6886bb3b9007f21b580d1e",
+    ".codex/agents/test-runner.toml": "sha256:ac75a4d507a6b517d00e358c6d3be4f38a3471b17e79b89cb3d85f49bbfc03bf",
+    ".codex/config.toml": "sha256:a58d6a8c7e6d6ec5bea3a095cd5a6d6589b8d5d1a3f4811443f2af6a1c383517",
+    ".mcp.json": "sha256:1ce21b16f32408b589cd6fde6ec9a9c2839803349e09af0564aa428f0b806fa9",
+    "AGENTS.md": "sha256:cb8d5a2a02e6173d3502abd47d139fea0b18ec6bdb1f613b6eb53f8432c31db3",
+    "CLAUDE.md": "sha256:bb4ef6e7248cb5655bfa11c1ce5d4c72a558e2470219b902784a0ee8086604ab"
+  }
+}

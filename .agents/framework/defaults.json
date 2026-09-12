@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "agents": [
+    {
+      "name": "test-runner",
+      "description": "Run the project's documented checks and report verified results and failures.",
+      "instructions": "framework/agents/test-runner.md",
+      "claude": {"tools": ["Read", "Bash", "Glob", "Grep"], "model": "haiku"},
+      "codex": {}
+    },
+    {
+      "name": "log-analyzer",
+      "description": "Analyze scoped logs to establish incident timelines and evidence for likely causes.",
+      "instructions": "framework/agents/log-analyzer.md",
+      "claude": {"tools": ["Read", "Grep", "Glob", "Bash"], "model": "sonnet"},
+      "codex": {}
+    }
+  ],
+  "skills": ["maintain-knowledge"],
+  "mcp_servers": {},
+  "claude_settings": {},
+  "codex_settings": {},
+  "codex_hooks": {}
+}

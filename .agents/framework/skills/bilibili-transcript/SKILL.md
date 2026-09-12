@@ -1,11 +1,16 @@
 ---
 name: bilibili-transcript
-description: 给定一个 B站视频链接，通过 WebFetch 抓取字幕并整理成连贯的讲稿文本（.txt）。如果字幕是非中文语言，同时输出原文版和中文翻译版。当用户提供 B站链接并要求获取讲稿、字幕、文字稿时触发。
+description: 根据用户提供的 B站视频链接获取可访问字幕并整理为讲稿文本；非中文字幕同时提供原文和中文翻译。用于提取字幕或文字稿的请求。
 ---
 
 # Bilibili 视频讲稿提取
 
 用户提供了一个 B站视频链接，按以下步骤提取字幕并整理成讲稿。
+
+使用当前 harness 可用的 HTTP 获取能力，不依赖特定工具名称。需要传递
+Referer 等自定义 header 或读取原始 JSON 时，可通过 shell 使用 `curl` 或
+Python 3 标准库；设置请求超时并检查 HTTP 状态和 API 返回码。工具权限和
+网络访问仍由当前 harness 管理。
 
 ## 执行步骤
 
@@ -15,7 +20,7 @@ description: 给定一个 B站视频链接，通过 WebFetch 抓取字幕并整�
 
 ### Step 2：获取视频基本信息（CID）
 
-使用 WebFetch 请求：
+请求：
 ```
 https://api.bilibili.com/x/web-interface/view?bvid=<bvid>
 ```
@@ -28,7 +33,7 @@ https://api.bilibili.com/x/web-interface/view?bvid=<bvid>
 
 ### Step 3：获取字幕列表
 
-使用 WebFetch 请求（带 Referer header）：
+请求以下接口，并以原视频地址作为 Referer header：
 ```
 https://api.bilibili.com/x/player/v2?bvid=<bvid>&cid=<cid>
 ```
@@ -38,11 +43,12 @@ https://api.bilibili.com/x/player/v2?bvid=<bvid>&cid=<cid>
 - `lan_doc` — 语言名称
 - `subtitle_url` — 字幕文件路径（补全为 `https:` 开头）
 
-如果 `subtitles` 为空数组，说明该视频没有字幕，告知用户并停止。
+API 成功但 `subtitles` 为空时，说明当前请求未获得可访问字幕，告知用户并停止。
+访问失败或登录限制不能直接判定为视频没有字幕。
 
 ### Step 4：下载字幕 JSON
 
-对每个字幕文件，使用 WebFetch 请求完整 URL：
+对需要处理的字幕文件，请求其完整 URL；仅当地址以 `//` 开头时补全协议：
 ```
 https:{subtitle_url}
 ```
@@ -53,7 +59,7 @@ https:{subtitle_url}
 
 将原始字幕文本整理为连贯的文章形式：
 - 去除重复片段
-- 合并断句��补全标点
+- 合并断句并补全标点
 - 按语义分段，每段之间空一行
 - 不保留时间戳
 
@@ -71,17 +77,19 @@ https:{subtitle_url}
 - 单语言：`<视频标题>.txt`
 - 双语言：`<视频标题>_原文.txt` 和 `<视频标题>_中文.txt`
 
-询问用户是否需要保存到本地文件（如需要，使用 Write 工具写入当前工作目录）。
+用户要求保存文件时，用当前 harness 的文件写入能力保存到指定目录；未指定时
+保存到当前工作目录。将视频标题中的路径分隔符等非法文件名字符替换为下划线，
+不覆盖已有同名文件，并向用户提供实际文件路径。
 
 ## 错误处理
 
-- **API 返回 -352 或 412**：B站反爬触发，告知用户需要登录 Cookie，请求用户提供 `SESSDATA` 值
+- **API 返回 -352 或 HTTP 412**：说明访问受限，报告实际错误；需要登录时使用用户已授权的本地认证方式，不要求用户在对话中粘贴 Cookie 或 `SESSDATA`
 - **subtitles 为空**：该视频无字幕，告知用户
 - **subtitle_url 为空字符串**：字幕文件暂不可用，告知用户
 - **多P视频**：默认处理第一P，询问用户是否需要处理其他分P
 
 ## 注意事项
 
-- WebFetch 请求 B站 API 时，提取 JSON 中的关键字段即可，不需要解析整个响应
+- 请求 B站 API 时，提取 JSON 中的关键字段即可，不需要展示整个响应
 - 字幕整理时保持原意，不要过度改写
 - 翻译时保持专业术语准确

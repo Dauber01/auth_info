@@ -1,0 +1,35 @@
+{
+  "agents": [],
+  "mcp_servers": {
+    "codegraph": {
+      "command": "codegraph",
+      "args": [
+        "serve",
+        "--mcp"
+      ]
+    }
+  },
+  "claude_settings": {
+    "permissions": {
+      "allow": [
+        "Bash(make:*)",
+        "Bash(go mod tidy:*)",
+        "Bash(go build:*)",
+        "Bash(go test *)",
+        "Bash(go vet ./...)",
+        "Bash(go version)",
+        "Bash(go env *)",
+        "Bash(protoc --version)"
+      ]
+    }
+  },
+  "schema_version": 1,
+  "disabled_agents": [],
+  "skills": [
+    "maintain-knowledge",
+    "financial-analyzing",
+    "bilibili-transcript"
+  ],
+  "codex_settings": {},
+  "codex_hooks": {}
+}
