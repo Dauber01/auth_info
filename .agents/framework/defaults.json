@@ -16,7 +16,7 @@
       "codex": {}
     }
   ],
-  "skills": ["maintain-knowledge"],
+  "skills": ["maintain-knowledge", "generate-tests"],
   "mcp_servers": {},
   "claude_settings": {},
   "codex_settings": {},

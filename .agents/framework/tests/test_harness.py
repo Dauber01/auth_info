@@ -59,7 +59,9 @@ class FrameworkTest(unittest.TestCase):
         self.assertEqual(json.loads((self.root / ".mcp.json").read_text()), {"mcpServers": {}})
         agent = (self.root / ".claude/agents/test-runner.md").read_text()
         self.assertNotIn("make test", agent)
-        self.assertIn("待验证", (self.root / ".agents/project/onboarding.md").read_text())
+        self.assertIn("待验证", (self.root / "docs/onboarding.md").read_text())
+        self.assertTrue((self.root / "tests/api").is_dir())
+        self.assertFalse((self.root / ".agents/project/index.md").exists())
 
     def test_extracted_package_cli_works_without_host_repository(self):
         source = self.package_copy()
@@ -256,7 +258,7 @@ class FrameworkTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, message):
                 self.sync()
         path.write_text(valid)
-        (self.root / ".agents/project/index.md").write_text("Read [topic](missing-topic.md).\n")
+        (self.root / "docs/README.md").write_text("Read [topic](missing-topic.md).\n")
         with self.assertRaisesRegex(ValueError, "missing resource"):
             self.sync()
 

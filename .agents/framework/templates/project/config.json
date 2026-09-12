@@ -2,7 +2,7 @@
   "schema_version": 1,
   "agents": [],
   "disabled_agents": [],
-  "skills": ["maintain-knowledge"],
+  "skills": ["maintain-knowledge", "generate-tests"],
   "mcp_servers": {},
   "claude_settings": {},
   "codex_settings": {},

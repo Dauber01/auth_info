@@ -5,15 +5,24 @@ Codex 自动读取本文件；Claude Code 通过 `CLAUDE.md` 的 `@AGENTS.md` �
 
 ## 知识库使用与维护
 
-- 开始任务时先阅读 [.agents/project/index.md](.agents/project/index.md)，再按任务读取对应知识文档。
+- **docs 是项目业务信息的唯一文档目录。** 开始任务先阅读 [docs/README.md](docs/README.md)、[docs/status.md](docs/status.md)，再按任务读取对应知识与任务材料。
 - 项目事实、开发约束、验证结果分别记录，事实附代码路径或命令来源；未核实的内容明确标记“待验证”。知识与代码不一致时核实并更新，不把旧文档当作实现事实。
 - 保留项目已有术语和架构边界。跨模块修改、接口变更、命令变化和问题修复后，更新受影响知识及索引；不要把原始会话、密钥或整份源码复制进知识库。
 - 知识不足时使用 `maintain-knowledge` skill 采集与任务相关的证据。没有代码证据时不臆造业务规则，也不为填满模板而扩大任务范围。
 - 如果仓库根目录存在 `.codegraph/`，理解或定位代码时先调用 `codegraph_explore` 或 `codegraph explore`；没有索引则跳过，不自行创建索引。
 
+## 任务与测试流程
+
+- 每个逻辑任务使用 `docs/tasks/YYYYMMDD-slug/`，按 [任务约定](docs/tasks/README.md) 建立计划、PRD、原型、设计流程、测试集合和验证记录。开始实现前先分析需求、约束和方案，完善前五份步骤文档；同一任务的追问复用已有目录。
+- 页面任务必须提供可查看原型及 `ui-cases.json`：角色、入口、前置条件、逐步操作、定位语义、每步预期和清理。无页面时保留材料并明确不适用及原因，不伪造页面或浏览器结果。
+- `docs/status.md` 是所有任务状态和交接记忆的总入口。开始、暂停、完成时更新状态、关键决策、受阻原因与下一步；详细证据放任务验证文件。
+- **每轮代码修改完成后、进入验证或交付前，必须读取并执行 `generate-tests` skill。** 根据需求与实际 diff 生成/更新有意义的用例，运行相关测试，回写任务用例和验证记录；已有测试充分覆盖时记录映射与依据，不机械重复生成。
+- 根 `tests/api/` 放 Python API 级测试；单元测试继续遵循项目语言的包内约定。API、页面、单元测试分别记录结果。测试环境、运行命令和覆盖边界见 [测试约定](docs/testing.md)。
+- Skill 的执行由两种 harness 遵循本入口流程；文件保存或 sync 命令不会后台调用模型。检查器检查文件/格式/链接，不能代替需求分析、用例生成或实际测试。
+
 ## 配置和资源归属
 
-- `.agents/framework/` 是可独立抽离的通用框架：规范、共享 agent、通用 skill、适配器和测试。项目知识与覆盖配置放在 `.agents/project/`；项目自定义 agent 放在 `.agents/agents/`。
+- `.agents/framework/` 是可独立抽离的通用框架：规范、共享 agent、通用 skill、适配器和模板。`.agents/project/` 只保存简短入口引用和配置覆盖；详细项目知识、业务约束与任务记忆放 docs。项目自定义 agent 放 `.agents/agents/`。
 - **同一 skill 只维护一份正文和资源。** 项目 skill 创建于 `.agents/skills/<name>/`；框架 skill 的正文在 `.agents/framework/skills/<name>/`，由 `.agents/skills/<name>` 软链接暴露。`.claude/skills -> ../.agents/skills` 让两种 harness 读取同一文件。不要复制或替换成普通目录。
 - 新 skill 的共享 frontmatter 只使用单行 `name`、`description`；name 与目录名一致，使用小写字母、数字和连字符。正文使用 Markdown，以相对于 `SKILL.md` 的链接引用真实资源。
 - 不在共享 skill 中使用 `context: fork`、`agent`、`hooks`、`allowed-tools`、`disable-model-invocation`、`$ARGUMENTS`、动态命令展开或 `${CLAUDE_SKILL_DIR}` 等专有语义。描述工具能力，不写死 harness 工具名。脚本路径从已加载的 `SKILL.md` 解析，不依赖当前工作目录。

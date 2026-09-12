@@ -9,7 +9,9 @@
 | 层 | 位置（注入后的项目） | 维护方式 |
 | --- | --- | --- |
 | 通用框架 | `.agents/framework/` | 从框架仓库复制，按版本显式升级 |
-| 项目知识 | `.agents/project/` | 项目维护；升级不覆盖已有文件 |
+| 项目知识与任务 | `docs/`、`docs/tasks/`、`docs/status.md` | 项目维护；升级不覆盖已有文件 |
+| 项目入口与配置 | `.agents/project/context.md`、`config.json` | 只放简短引用与 AI 设置 |
+| API 级测试 | `tests/api/` | 项目使用 Python 维护；升级不覆盖 |
 | 项目 skills | `.agents/skills/<name>/` | 项目维护正文及资源 |
 | 通用 skills | `.agents/framework/skills/<name>/` | 唯一正文；通过 `.agents/skills/<name>` 软链接选择启用 |
 | 项目 agents | `.agents/agents/*.md` | 项目维护，可覆盖或增加通用角色 |
@@ -18,12 +20,12 @@
 | 个人状态 | `.claude/settings.local.json`、用户级 Codex 设置、凭据、索引 | 留在本机，不进入框架仓库 |
 
 `AGENTS.md` 由 `instructions.md` 与项目 `context.md` 组合，自动载入关键规则。
-`CLAUDE.md` 导入 AGENTS.md；详细知识从项目 `index.md` 按需阅读。
+`CLAUDE.md` 导入 AGENTS.md；详细知识从 `docs/README.md` 导航，任务记忆读 `docs/status.md`。
 `.claude/skills -> ../.agents/skills`，框架 skills 再通过逐项软链接指向唯一源文件。
 只更改选择列表即可启用/停用通用 skill，不需要复制正文。
 
 知识维护方法见 [知识协议](skills/maintain-knowledge/references/protocol.md)。
-框架默认仅启用 `maintain-knowledge`，并提供 test-runner、log-analyzer 两个角色。
+框架默认启用 `maintain-knowledge`、`generate-tests`，并提供 test-runner、log-analyzer 两个角色。
 financial-analyzing 与 bilibili-transcript 是可选通用 skills，不默认注入其执行入口。
 默认没有项目权限放行、MCP 或 hooks；目标项目自行选择。
 
@@ -41,9 +43,30 @@ python3 -B -m unittest discover -s .agents/framework/tests
 
 抽离之前，将命令中的 `harness.py` 换成当前项目 `.agents/framework/harness.py` 即可。
 安装不要求目标项目有 Git、Go 或 Makefile；不联网、不执行目标项目脚本、不安装依赖。
-它只建立配置入口和知识模板，**不会自动理解新项目**。随后让任一 harness 使用
+它建立配置入口、docs 文档/任务约定、tests/api 目录，**不会自动理解新项目**。随后让任一 harness 使用
 `maintain-knowledge` 读取目标仓库，补齐来源、架构、业务规则与验证命令。
 模板的“待验证”是显式知识缺口，不应被当作完成初始化。
+
+0.2.0 起 docs 是业务知识的唯一归属。从 0.1.x 升级时，将原 `.agents/project/` 中的
+业务文档迁入 docs 并修正链接，保留 context.md 的简短引用和 config.json；在项目 skills
+名单加入 generate-tests。安装器不擅自移动旧业务文档或覆盖项目配置。
+
+## 任务与测试流程
+
+实现前创建/复用任务，并完成计划、PRD、原型、设计流程和初始测试用例：
+
+```bash
+python3 .agents/framework/tasks.py new --id 20260912-example --title "示例任务"
+python3 .agents/framework/tasks.py check
+```
+
+任务模板保存在框架 `task-templates/`，生成到项目 `docs/tasks/<id>/`；状态和任务记忆
+统一在 docs/status.md。页面任务使用 ui-cases.json 保存角色、入口、操作步骤与每步断言；
+没有页面时必须明确不适用。格式与状态更新命令见注入后的 docs/tasks/README.md。
+
+每轮代码修改后执行 [generate-tests](skills/generate-tests/SKILL.md)，生成/更新测试，
+运行并写回验证记录。该要求由共享主入口约束 agent 工作流；同步脚本或文件保存不会
+后台启动模型。新项目 tests/api 初始只有约定，不包含假设其技术栈的可执行用例。
 
 升级时在框架独立仓库切换到经过验证的版本，先 dry-run，再执行相同 install 命令。
 `VERSION` 是发布版本，lock 保存实际文件内容哈希，因此同版本本地修改也能被发现。
@@ -107,10 +130,10 @@ python3 .agents/framework/harness.py check --root .
 python3 -B -m unittest discover -s .agents/framework/tests
 ```
 
-check 验证源配置、生成结果、软链接、共享 skill frontmatter 和 Markdown 本地资源链接。
+check 验证源配置、生成结果、软链接、共享 skill frontmatter、docs 链接、任务材料及状态索引。
 它不会证明知识内容正确，不校验所有厂商字段枚举，也不会调用模型或真实 hooks。
 业务验证由项目知识库指向的测试和代码检查完成。
-新知识文档放 `.agents/project/`，在 index 中加入阅读时机、来源与验证状态；新增 skill
+新知识文档放 docs，在 README 中加入阅读时机、来源与验证状态；新增 skill
 必须遵守生成 AGENTS.md 的兼容约定，并在两种 harness 的新会话中检查发现与实际行为。
 
 框架尚在首个项目内开发时，完成核心修改与测试后，运行
@@ -123,6 +146,6 @@ check 验证源配置、生成结果、软链接、共享 skill frontmatter 和 
 - [Codex AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)、[skills](https://learn.chatgpt.com/docs/build-skills)、[subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)、[hooks](https://learn.chatgpt.com/docs/hooks)。
 - [Claude memory](https://code.claude.com/docs/en/memory)、[skills](https://code.claude.com/docs/en/skills)、[subagents](https://code.claude.com/docs/en/sub-agents)、[hooks](https://code.claude.com/docs/en/hooks)。
 
-后续独立仓库只需包含本目录内容；不要携带宿主项目 `.agents/project/`、项目 API skill、
+后续独立仓库只需包含本目录内容；不要携带宿主项目 docs、tests、`.agents/project/`、项目 API skill、
 个人配置或锁文件。通用框架的详细知识是“怎样采集和维护项目知识”，具体项目知识留在
 各自仓库，并随着该项目代码演进。

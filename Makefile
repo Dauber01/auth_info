@@ -1,4 +1,4 @@
-.PHONY: help proto wire build run clean install-tools migrate seed mod-tidy test fmt lint all sync-harness check-harness
+.PHONY: help proto wire build run clean install-tools migrate seed mod-tidy test test-api fmt lint all sync-harness check-harness
 
 # 变量定义
 PROJECT_NAME := auth_info
@@ -33,6 +33,10 @@ sync-harness:
 check-harness:
 	@$(PYTHON) .agents/framework/harness.py check --root .
 	@$(PYTHON) -B -m unittest discover -s .agents/framework/tests
+
+## test-api: 启动隔离服务并运行 Python API 测试
+test-api:
+	@$(PYTHON) -B tests/run_api.py
 
 ## install-tools: 安装 protoc, protoc-gen-go, protoc-gen-go-grpc 工具
 install-tools:

@@ -36,6 +36,9 @@ jobs:
             exit 1
           fi
 
+      - name: Run Python API Tests
+        run: make test-api
+
       - name: Run Tests
         run: go test ./...
 

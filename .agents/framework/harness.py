@@ -235,11 +235,12 @@ def validate_skill(folder):
 
 
 def validate_links(content, base, virtual=()):
+    virtual = {path.resolve() for path in virtual}
     for target in re.findall(r"\]\(([^)]+)\)", content):
         if re.match(r"[a-zA-Z][a-zA-Z0-9+.-]*:", target) or target.startswith("#"):
             continue
         path = base / target.split("#", 1)[0].strip("<>")
-        if not path.exists() and path not in virtual:
+        if not path.exists() and path.resolve() not in virtual:
             raise ValueError(f"{base}: missing resource {target}")
 
 
@@ -251,13 +252,17 @@ def render(root, package=PACKAGE, seeds=None):
     virtual = {root / p for p in (seeds or {})}
     validate_links(context, root, virtual)
     validate_links(instructions, root, virtual)
-    docs = set((root / ".agents/project").glob("*.md")) | {
+    docs = set((root / ".agents/project").glob("*.md")) | set((root / "docs").rglob("*.md")) | {
         root / p for p in (seeds or {}) if p.endswith(".md")}
     for doc in docs:
         if doc.name != "context.md":
             validate_links(read_source(root, doc.relative_to(root).as_posix(), seeds), doc.parent, virtual)
-    if not (root / ".agents/project/index.md").is_file() and ".agents/project/index.md" not in (seeds or {}):
-        raise ValueError("project knowledge index is required")
+    for relative in ("docs/README.md", "docs/status.md", "docs/testing.md", "docs/tasks/README.md"):
+        if not (root / relative).is_file() and relative not in (seeds or {}):
+            raise ValueError(f"required project document: {relative}")
+    import tasks
+    status = (seeds or {}).get("docs/status.md")
+    tasks.validate(root, status.data.decode("utf-8") if status else None)
     outputs["AGENTS.md"] = text_entry(f"<!-- {MARKER} -->\n\n{instructions.rstrip()}\n\n{context.strip()}\n")
     outputs["CLAUDE.md"] = text_entry(f"# CLAUDE.md\n\n@AGENTS.md\n\n<!-- {MARKER} -->\n")
     for agent in config["agents"]:
@@ -344,9 +349,10 @@ def sync_plan(root, package=PACKAGE):
 
 
 def package_files(package):
-    required = {"harness.py", "README.md", "VERSION", "instructions.md", "defaults.json"}
+    package = package.resolve()
+    required = {"harness.py", "tasks.py", "README.md", "VERSION", "instructions.md", "defaults.json"}
     paths = [package / name for name in sorted(required)]
-    for directory in ("agents", "skills", "templates", "tests"):
+    for directory in ("agents", "skills", "templates", "task-templates", "tests"):
         paths.extend(p for p in sorted((package / directory).rglob("*"))
                      if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc")
     outputs = {}
@@ -364,13 +370,17 @@ def install_plan(root, package=PACKAGE):
     core = package_files(package)
     changes = plan_managed(root, core, FRAMEWORK_LOCK, lambda p: p.startswith(".agents/framework/"))
     seeds = {}
-    for path in sorted((package / "templates/project").glob("*")):
-        relative = ".agents/project/" + path.name
-        target = safe_path(root, relative)
-        if target.is_symlink():
-            raise ValueError(f"project source must not be a symlink: {relative}")
-        if not target.exists():
-            seeds[relative] = Entry(data=path.read_bytes())
+    for source, destination in (("project", ".agents/project"), ("docs", "docs"), ("tests", "tests")):
+        template = package / "templates" / source
+        for path in sorted(template.rglob("*")):
+            if not path.is_file():
+                continue
+            relative = destination + "/" + path.relative_to(template).as_posix()
+            target = safe_path(root, relative)
+            if target.is_symlink():
+                raise ValueError(f"project source must not be a symlink: {relative}")
+            if not target.exists():
+                seeds[relative] = Entry(data=path.read_bytes())
     outputs = render(root, package, seeds)
     changes.update(plan_managed(root, outputs, GENERATED_LOCK, generated_path))
     changes.update(seeds)

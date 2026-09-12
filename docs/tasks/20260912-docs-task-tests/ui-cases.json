@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "applicable": false,
+  "reason": "本次仅调整文档、Agent 流程与 API 测试设施，没有前端页面。",
+  "cases": []
+}

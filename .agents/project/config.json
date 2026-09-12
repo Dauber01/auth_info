@@ -28,7 +28,8 @@
   "skills": [
     "maintain-knowledge",
     "financial-analyzing",
-    "bilibili-transcript"
+    "bilibili-transcript",
+    "generate-tests"
   ],
   "codex_settings": {},
   "codex_hooks": {}

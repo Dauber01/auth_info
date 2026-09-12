@@ -9,8 +9,8 @@
 - `TestGenerateWord_WithTextAndImage`：`template not found: word_template_test`。
 - `TestGenerateWord_RichTextAndImageOptions`：`template not found: word_template_test`。
 
-来源：[document UseCase](../../internal/biz/document/document.go) 的 `NewUseCase`
-含 Windows 模板/字体路径；相关测试位于 [document 包](../../internal/biz/document/)。
+来源：[document UseCase](../internal/biz/document/document.go) 的 `NewUseCase`
+含 Windows 模板/字体路径；相关测试位于 [document 包](../internal/biz/document/)。
 当时 `make fmt` 与 `make lint` 通过；这些测试失败在 AI 配置改造前已复现。
 
 复核命令：`go test -v ./internal/biz/document/...`，共享行为验证运行 `make test`。

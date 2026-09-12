@@ -1,7 +1,7 @@
 # auth_info 开发规范
 
-来源：原项目 AGENTS.md；2026-09-12 迁入项目知识层。规范描述预期约束，
-实际实现以代码为准。命令来源为 [Makefile](../../Makefile)，更改工具链或工作流时复核。
+来源：原项目 AGENTS.md；2026-09-12 迁入 docs。规范描述预期约束，
+实际实现以代码为准。命令来源为 [Makefile](../Makefile)，更改工具链或工作流时复核。
 
 ## Commands
 
@@ -27,6 +27,7 @@ make seed             # 初始化 Casbin 默认策略（cmd/seed，首次部署�
 make fmt              # go fmt 格式化
 make lint             # go vet 静态分析
 make test             # go test -v ./...（运行全部测试）
+make test-api         # Python 调用本机隔离服务，验证真实 HTTP API
 ```
 
 运行后访问：
@@ -155,6 +156,7 @@ logger.Error(
 
 ### 测试与交付
 
+- 开始实现前准备 docs/tasks 的计划、PRD、原型、设计与用例；每轮代码修改后执行 generate-tests skill，更新任务用例、验证记录和 docs/status.md。
 - 修复 bug 时优先先添加可复现测试，再实现修复。
 - 新业务逻辑至少覆盖成功、参数非法、资源不存在以及关键依赖失败路径。
 - 测试应确定性执行，不依赖真实时间、随机网络、共享数据库或执行顺序。
@@ -171,7 +173,7 @@ logger.Error(
 ## 配置
 
 主配置文件：`config/config.yaml`，通过 Viper 加载。
-[LoadConfig](../../internal/config/config.go) 使用 `AddConfigPath`，所以 `-config` 接收目录。
+[LoadConfig](../internal/config/config.go) 使用 `AddConfigPath`，所以 `-config` 接收目录。
 Makefile 的构建产物为 `bin/auth_info`：
 
 ```bash

@@ -5,7 +5,7 @@ description: Initialize or update a project's agent knowledge base from reposito
 
 # Maintain Project Knowledge
 
-Read AGENTS.md and `.agents/project/index.md` from the target project root.
+Read AGENTS.md, `docs/README.md`, and `docs/status.md` from the target project root.
 Apply the [knowledge protocol](references/protocol.md). Keep framework rules
 separate from project facts. Never copy facts from the framework's original host
 project into a different project.
@@ -15,13 +15,15 @@ project into a different project.
    contracts, and tests. Use CodeGraph first if the project has an index.
 2. Follow relevant entrypoints and boundaries through current source. Record only
    claims supported by file paths, symbols, tests, or explicit user decisions.
-3. Write concise project documents covering verified commands, architecture,
+3. Write concise project documents in `docs/` covering verified commands, architecture,
    domain rules, and operational constraints. Use the protocol's minimal record
    structure. Existing normative rules remain rules until implementation verifies
    them; examples are not automatically universal conventions.
-4. Update `.agents/project/index.md` with when to read each document. Keep a short
-   `.agents/project/context.md` for automatic loading. Detailed facts belong in
-   topic documents, so the main entry stays focused.
+4. Update `docs/README.md` with when to read each document, and `docs/status.md`
+   with task state, decisions, and next steps. Preserve task PRD, prototypes,
+   designs, cases, and verification in `docs/tasks/<task-id>/`. Keep only short
+   links in `.agents/project/context.md` for automatic loading; all detailed
+   project facts belong in docs topic documents.
 5. Validate sources and links. Run relevant local checks when authorized and
    practical; record the command, result, revision or date, and environment limits.
    Mark anything not verified as unknown. Do not invoke deployment, database
