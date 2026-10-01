@@ -19,7 +19,7 @@ handler、业务用例、Proto 校验、JWT/Casbin、TraceID 与错误中间件�
 它不启动项目数据库，不运行迁移或 seed。JWT 测试密钥在启动时临时生成，不写入仓库。
 
 当前范围：注册/登录成功、重复注册、输入非法、错误凭据、缺失/无效 Token，以及
-登录后访问受保护 hello 接口、TraceID 透传及已认证但无策略的 403。用例位于 [tests/api/test_auth.py](../tests/api/test_auth.py)。
+登录后访问受保护 hello 接口、TraceID 透传、已认证但无策略的 403，以及已删除的 PDF/Word 路径返回 404。用例位于 [tests/api/test_auth.py](../tests/api/test_auth.py)。
 每个用例使用独立用户，整个 fixture 随每次 runner 执行重建。
 结果不能代表 MySQL、完整应用启动、gRPC、所有业务模块或浏览器 UI 已验证。
 
@@ -31,7 +31,6 @@ handler、业务用例、Proto 校验、JWT/Casbin、TraceID 与错误中间件�
 
 Go 单元测试继续与被测包同目录。按变更运行受影响包，公共行为变化运行 `make test`。
 提交前执行 `make fmt`、`make lint`；框架与任务工具执行 `make check-harness`。
-既有文档模板问题见 [known-issues.md](known-issues.md)，必须与本次结果分开记录。
 
 ## 页面用例
 
@@ -43,10 +42,11 @@ API 测试通过不能代替页面点击与逐步断言。没有页面时标记�
 
 App 测试覆盖初始化失败回收、第二端口失败回收、并发幂等停止与关闭超时；server 测试验证 HTTP 公开/保护路由、MCP deadline 例外和真实 gRPC 调用。
 config 测试覆盖 includes/APP 优先级、多次加载隔离、默认/目录 test 选择、显式 line 及实际环境文件可加载性。事务测试使用临时 SQLite，真实 auth/dict repo 验证提交、回滚及跨池/嵌套拒绝，不代表 MySQL 方言全部验证。
-文档测试使用内存 DOCX/JSON 与临时目录，保留文字/图片/富文本断言，不生成仓库内测试产物。
 
 ```sh
-go test -race -count=1 -timeout=120s ./internal/app ./internal/server ./internal/config ./internal/middleware ./internal/pkg/... ./internal/data/shared ./internal/data/document ./internal/biz/document
+go test -race -count=1 -timeout=120s ./internal/app ./internal/server ./internal/config ./internal/middleware ./internal/pkg/... ./internal/data/shared
 ```
 
 HTTP fixture/httptest 与生命周期测试需要允许本机临时端口；端口权限错误应单独记录，不能当作断言失败或测试通过。
+
+2026-10-01：文档生成功能及专用测试已删除；HTTP/server 与 Python API 均补充旧接口 404 回归，不再运行文档渲染测试。

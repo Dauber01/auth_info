@@ -9,12 +9,12 @@
 | --- | --- |
 | [test.yaml](../config/test.yaml) | 测试环境与默认启动入口；mode=test、log.level=warn，保留原测试数据库/JWT 设置 |
 | [line.yaml](../config/line.yaml) | 线上环境；mode=release、log.level=info，部署凭据由 APP_* 注入 |
-| [includes/base.yaml](../config/includes/base.yaml) | 两个环境共用的端口、超时、日志、文档资源参数，不是第三个环境 |
+| [includes/base.yaml](../config/includes/base.yaml) | 两个环境共用的端口、超时、日志参数，不是第三个环境 |
 | [rbac_model.conf](../config/rbac_model.conf) | 共用 Casbin 权限模型，不随环境复制 |
 
 已移除 dev.yaml、pre.yaml 和旧 config.yaml。test 与 line 都直接包含公共 base，彼此不继承。
 配置优先级：代码默认值 < includes（按声明顺序）< 环境入口文件 < APP_*。
-includes 路径相对声明文件解析；模板/字体/Casbin 模型等资源路径相对进程工作目录解析。
+includes 路径相对声明文件解析；Casbin 模型等资源路径相对进程工作目录解析。
 
 ## 启动与命令
 
@@ -49,12 +49,11 @@ CONFIG_FILE 显式给定时优先于 ENV/CONFIG_DIR 的路径拼接。直接命�
 
 | 分组 | 主要字段与职责 |
 | --- | --- |
-| server | HTTP/gRPC 端口、Gin mode、连接/普通请求/文档/gRPC/关闭期限；grpc_port 为 0 或省略时使用 HTTP port + 1000 |
+| server | HTTP/gRPC 端口、Gin mode、连接/普通请求/gRPC/关闭期限；grpc_port 为 0 或省略时使用 HTTP port + 1000 |
 | log | level/format/access，以及可选本地滚动文件 file；不上传 ES |
 | mysql | host/port/user/password/dbname/charset 与连接池 pool |
 | jwt | secret 与按小时计的 expire |
 | casbin | model 权限模型路径 |
-| document | template_dir、可选 font_path、image_timeout；中文 PDF 需配置可用中文字体 |
 
 line 的部署配置至少应提供 APP_MYSQL_HOST、APP_MYSQL_USER、APP_MYSQL_PASSWORD、APP_MYSQL_DBNAME、
 APP_JWT_SECRET；端口等按需覆盖。未注入有效 JWT secret 时配置校验失败。

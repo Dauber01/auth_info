@@ -13,7 +13,6 @@ docs 是全部项目业务信息的文档归属。AI 框架在 .agents/framework
 | test/line 选择、配置覆盖与字段职责 | [环境配置](configuration.md) | 仅保留两个环境，默认 test |
 | 接口契约、校验和错误响应 | [API 约定](api-conventions.md) | 结合 Proto 和 handler 使用 |
 | Python API、Go 单元及页面验证 | [测试约定](testing.md) | 记录执行边界与命令 |
-| 文档模板相关的历史失败 | [已知问题](known-issues.md) | 有日期的历史观察，使用前复核 |
 | 参考项目结构比较与融合顺序 | [结构融合分析](tasks/20260930-structure-fusion-review/analysis.md) | 保留重构前分析；实施见任务设计与验证 |
 | 知识采集范围与缺口 | [采集记录](onboarding.md) | 部分已核实 |
 

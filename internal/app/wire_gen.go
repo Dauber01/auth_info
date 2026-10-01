@@ -9,7 +9,6 @@ package app
 import (
 	auth2 "auth_info/internal/biz/auth"
 	dict2 "auth_info/internal/biz/dict"
-	"auth_info/internal/biz/document"
 	"auth_info/internal/biz/hello"
 	"auth_info/internal/config"
 	"auth_info/internal/data"
@@ -17,7 +16,6 @@ import (
 	"auth_info/internal/data/dict"
 	auth3 "auth_info/internal/handler/auth"
 	dict3 "auth_info/internal/handler/dict"
-	document2 "auth_info/internal/handler/document"
 	hello2 "auth_info/internal/handler/hello"
 	"auth_info/internal/mcpserver"
 	"auth_info/internal/server"
@@ -49,12 +47,6 @@ func initializeApp(cfg *config.Config, resources *Lifecycle) (*App, error) {
 	dictRepo := dict.NewDictRepository(db)
 	dictUseCase := dict2.NewUseCase(dictRepo, logger)
 	dictHandler := dict3.NewHandler(dictUseCase)
-	documentResources, err := ProvideDocumentResources(cfg, resources)
-	if err != nil {
-		return nil, err
-	}
-	documentUseCase := document.NewUseCase(documentResources)
-	documentHandler := document2.NewHandler(documentUseCase)
 	httpDeps := server.HTTPDeps{
 		AuthUC:          useCase,
 		Enforcer:        enforcer,
@@ -62,7 +54,6 @@ func initializeApp(cfg *config.Config, resources *Lifecycle) (*App, error) {
 		AuthHandler:     authHandler,
 		HelloMCPHandler: httpHandler,
 		DictHandler:     dictHandler,
-		DocumentHandler: documentHandler,
 	}
 	httpServer, err := server.NewHTTPServer(cfg, logger, httpDeps)
 	if err != nil {

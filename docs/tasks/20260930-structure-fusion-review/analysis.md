@@ -2,7 +2,7 @@
 
 范围：比较当前工作区源码的结构与工程边界，不审计所有业务功能，不执行迁移。
 核实日期：2026-09-30。auth_info 基线 `5cffad6`；参考项目 HEAD `76becec`，参考工作区存在用户未提交的配置改动与未跟踪的索引/规划文件，均未修改。
-历史报告：以下“现状”指重构前基线；2026-10-01 已进入实施，当前结构以 [架构](../../architecture.md) 为准。引用移动后的路径用于继续导航，历史结论不要视为当前实现。测试范围见 [验证记录](05-verification.md)。
+历史报告：以下“现状”指重构前基线；document 生成功能与源码已在后续批次删除，相关路径仅是历史证据；2026-10-01 已进入实施，当前结构以 [架构](../../architecture.md) 为准。引用移动后的路径用于继续导航，历史结论不要视为当前实现。测试范围见 [验证记录](05-verification.md)。
 复核触发：任一项目的 server/app、配置、协议契约、事务或日志机制发生变化。
 
 ## 判断
@@ -64,7 +64,7 @@
 
 建议区分普通 API、文档生成和 MCP 流式请求的期限；数据库/远端请求传播 context，长计算在可取消的边界检查 ctx。HTTP WriteTimeout 也要按协议用途设计，不能给 MCP 长连接机械套用普通接口的短时限。
 
-证据：[参考 timeout](../../../../goweb_brand_manage/internal/middleware/timeout.go)、[当前 GeneratePDF](../../../internal/biz/document/document.go)、[当前 MCP transport](../../../internal/mcpserver/hello.go)。
+证据：[参考 timeout](../../../../goweb_brand_manage/internal/middleware/timeout.go)、当前 GeneratePDF（历史模块已删除，路径 `../../../internal/biz/document/document.go`）、[当前 MCP transport](../../../internal/mcpserver/hello.go)。
 
 ### 5. 日志能力分步引入
 

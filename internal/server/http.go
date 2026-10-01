@@ -16,12 +16,10 @@ import (
 	"auth_info/internal/config"
 	authhdl "auth_info/internal/handler/auth"
 	dicthdl "auth_info/internal/handler/dict"
-	dochdl "auth_info/internal/handler/document"
 	hellohdl "auth_info/internal/handler/hello"
 	"auth_info/internal/middleware"
 	authrouter "auth_info/internal/router/auth"
 	dictrouter "auth_info/internal/router/dict"
-	docrouter "auth_info/internal/router/document"
 	hellorouter "auth_info/internal/router/hello"
 )
 
@@ -33,13 +31,12 @@ type HTTPDeps struct {
 	AuthHandler     *authhdl.Handler
 	HelloMCPHandler http.Handler
 	DictHandler     *dicthdl.Handler
-	DocumentHandler *dochdl.Handler
 }
 
 // NewHTTPServer preserves public/protected routing and keeps MCP outside API deadlines.
 func NewHTTPServer(cfg *config.Config, log *zap.Logger, deps HTTPDeps) (*http.Server, error) {
 	if deps.AuthUC == nil || deps.Enforcer == nil || deps.HelloHandler == nil || deps.AuthHandler == nil ||
-		deps.HelloMCPHandler == nil || deps.DictHandler == nil || deps.DocumentHandler == nil {
+		deps.HelloMCPHandler == nil || deps.DictHandler == nil {
 		return nil, fmt.Errorf("http dependencies are incomplete")
 	}
 	gin.SetMode(cfg.Server.Mode)
@@ -56,19 +53,12 @@ func NewHTTPServer(cfg *config.Config, log *zap.Logger, deps HTTPDeps) (*http.Se
 	ordinary := protected.Group("", middleware.RequestTimeout(cfg.Server.RequestTimeout))
 	hellorouter.Register(ordinary, deps.HelloHandler)
 	dictrouter.Register(ordinary, deps.DictHandler)
-	docrouter.Register(protected.Group("", middleware.RequestTimeout(cfg.Server.DocumentTimeout)), deps.DocumentHandler)
 
 	// A server-wide WriteTimeout would terminate MCP streams. Apply it to API responses only.
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, "/api/v1/") && cfg.Server.WriteTimeout > 0 {
-			duration := cfg.Server.WriteTimeout
-			if strings.HasPrefix(r.URL.Path, "/api/v1/document/") && cfg.Server.DocumentTimeout > 0 {
-				if budget := cfg.Server.DocumentTimeout + 5*time.Second; budget > duration {
-					duration = budget
-				}
-			}
 			controller := http.NewResponseController(w)
-			err := controller.SetWriteDeadline(time.Now().Add(duration))
+			err := controller.SetWriteDeadline(time.Now().Add(cfg.Server.WriteTimeout))
 			if err != nil && !errors.Is(err, http.ErrNotSupported) {
 				log.Warn("set response deadline failed", zap.Error(err))
 			}

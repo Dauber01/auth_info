@@ -111,8 +111,8 @@ func setDefaults(v *viper.Viper) {
 		"server.port": 8080, "server.mode": "debug", "server.grpc_port": 0,
 		"server.read_header_timeout": "5s", "server.read_timeout": "15s",
 		"server.write_timeout": "35s", "server.idle_timeout": "120s",
-		"server.request_timeout": "30s", "server.document_timeout": "2m",
-		"server.grpc_timeout": "30s", "server.shutdown_timeout": "5s",
+		"server.request_timeout": "30s",
+		"server.grpc_timeout":    "30s", "server.shutdown_timeout": "5s",
 		"log.level": "info", "log.format": "json", "log.access": true,
 		"log.file.path": "logs/app.log", "log.file.max_size_mb": 100,
 		"log.file.max_backups": 10, "log.file.max_age_days": 30,
@@ -120,8 +120,6 @@ func setDefaults(v *viper.Viper) {
 		"mysql.pool.max_open_conns": 100, "mysql.pool.max_idle_conns": 10,
 		"mysql.pool.conn_max_lifetime": "1h", "mysql.pool.conn_max_idle_time": "10m",
 		"jwt.expire": 24, "casbin.model": "config/rbac_model.conf",
-		"document.template_dir": "templates", "document.font_path": "",
-		"document.image_timeout": "30s",
 	} {
 		v.SetDefault(key, value)
 	}

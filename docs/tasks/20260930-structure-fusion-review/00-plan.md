@@ -37,3 +37,15 @@ CONFIG_FILE 保留自定义文件入口，Make ENV 仅接受 test/line。同步�
 实现后检查实际环境文件加载、默认/显式选择、非法 ENV 与命令 dry-run，再执行全量 Go 测试、fmt/vet/build 和文档检查。
 
 配置收敛已完成：CFG-03～05、全量 Go、fmt/vet/build、CLI 默认入口及框架/链接检查通过。
+
+## 2026-10-01 移除文档生成
+
+用户要求删除文档生成功能及相关模块、模板、文件、配置。基线 7c04791。
+先移除 biz/data/handler/router/document、document Proto 与对应生成文件、根 templates 中业务模板；
+清理 Wire provider/HTTPDeps/路由与 document 专用 deadline，以及配置类型/默认值/校验/YAML。
+删除专用 fpdf 依赖，通过 mod-tidy 确認模块闭包；重新生成 Proto/Wire，更新实际装配测试与 API fixture。
+同步当前知识文档，保留必要的任务历史并明确模块已删除，清除历史材料中的失效源码链接。
+补测未登录/已登录访问两条旧路由均 404，回归 auth/dict/hello、gRPC、MCP 与 test/line 配置。
+本轮执行 fmt/generate/vet/build/全量 Go/API、框架和链接检查，不运行数据库迁移或部署。
+
+文档生成删除批次已完成：正式生成与依赖清理通过，13 个 Go 测试包、10 项 API、vet/build 及框架/链接检查通过。

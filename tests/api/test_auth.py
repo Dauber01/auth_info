@@ -76,3 +76,15 @@ class AuthAPITest(unittest.TestCase):
                                        {"username": "api_no_policy", "password": "fixture-password"})
         token = self.assert_reply(response, 200)["data"]["token"]
         self.assert_reply(self.client.request("GET", "/api/v1/dict/types", token=token), 403)
+
+    def test_document_generation_routes_are_removed(self):
+        self.assert_reply(self.register("api_removed_routes"), 200)
+        login = self.client.request("POST", "/api/v1/auth/login",
+                                    {"username": "api_removed_routes", "password": "fixture-password"})
+        token = self.assert_reply(login, 200)["data"]["token"]
+        for path in ("/api/v1/document/generate-pdf", "/api/v1/document/generate-word"):
+            for credential in (None, token):
+                with self.subTest(path=path, authenticated=credential is not None):
+                    response = self.client.request("POST", path, {}, token=credential)
+                    self.assertEqual(response.status, 404)
+                    self.assertNotIn("content-disposition", {key.lower() for key in response.headers})

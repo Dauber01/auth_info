@@ -5,12 +5,11 @@ import "time"
 
 // Config contains deployment settings; business packages receive narrower options.
 type Config struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Log      LogConfig      `mapstructure:"log"`
-	MySQL    MySQLConfig    `mapstructure:"mysql"`
-	JWT      JWTConfig      `mapstructure:"jwt"`
-	Casbin   CasbinConfig   `mapstructure:"casbin"`
-	Document DocumentConfig `mapstructure:"document"`
+	Server ServerConfig `mapstructure:"server"`
+	Log    LogConfig    `mapstructure:"log"`
+	MySQL  MySQLConfig  `mapstructure:"mysql"`
+	JWT    JWTConfig    `mapstructure:"jwt"`
+	Casbin CasbinConfig `mapstructure:"casbin"`
 }
 
 // ServerConfig separates connection, ordinary request and long operation deadlines.
@@ -23,7 +22,6 @@ type ServerConfig struct {
 	WriteTimeout      time.Duration `mapstructure:"write_timeout"`
 	IdleTimeout       time.Duration `mapstructure:"idle_timeout"`
 	RequestTimeout    time.Duration `mapstructure:"request_timeout"`
-	DocumentTimeout   time.Duration `mapstructure:"document_timeout"`
 	GRPCTimeout       time.Duration `mapstructure:"grpc_timeout"`
 	ShutdownTimeout   time.Duration `mapstructure:"shutdown_timeout"`
 }
@@ -74,11 +72,4 @@ type JWTConfig struct {
 // CasbinConfig selects the RBAC model.
 type CasbinConfig struct {
 	Model string `mapstructure:"model"`
-}
-
-// DocumentConfig configures local resources and image downloads.
-type DocumentConfig struct {
-	TemplateDir  string        `mapstructure:"template_dir"`
-	FontPath     string        `mapstructure:"font_path"`
-	ImageTimeout time.Duration `mapstructure:"image_timeout"`
 }

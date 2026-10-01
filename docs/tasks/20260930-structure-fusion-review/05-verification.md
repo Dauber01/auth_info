@@ -132,3 +132,19 @@ AC-10～12 已实现并验证，以上架构回归记录属于前一批次。本
 - harness sync/check、tasks check、24 项框架测试均退出 0；sync 更新 0 文件；134 个 docs 本地链接有效，git diff --check 通过。
 - 未更改 API/并发/生成协议，本批次不重复 API/race/Wire；前一批次结果保留，未算作本次新执行。无页面，ui-cases 继续不适用。
 - 未运行真实 MySQL 联调、服务部署或数据库迁移；本批次未提交或推送。
+
+## 移除文档生成批次（2026-10-01）
+
+AC-13～15 已完成。基线 7c04791；以上架构/配置/文档渲染结果仅是前批次历史证据。
+
+- 已删除 biz/data/handler/router/document 的完整模块与专用测试、document.proto/document.pb.go、4 个业务模板及专用 known-issues 文档。
+- 已清理 HTTPDeps、路由、Wire/provider、文档资源所有权、DocumentConfig/DocumentTimeout、默认值/校验和 base.yaml 对应配置；test/line 及剩余服务不依赖模板目录。
+- `make generate` 退出 0，正式生成 Proto/Wire；剩余 Proto 的生成结果仅 protoc 版本注释从原环境变为本机版本，消息/服务代码未变，已按元数据行过滤比较确认。
+- `make mod-tidy` 退出 0；只移除 github.com/go-pdf/fpdf 及其两个 sum 条目，没有升级剩余依赖。
+- generate-tests 已按实际删除 diff 与 AC 更新 REMOVE-01～04：更新真实装配测试/fixture，新增 `test_document_generation_routes_are_removed`；APP-only 配置覆盖用例改用 log.file.compress，保留原独立加载/校验行为断言。
+- 使用前述离线 Go 环境执行 `make fmt`、`make test`、`make lint build`，均退出 0；13 个有测试的 Go 包通过。
+- `make test-api` 退出 0，10 项 API 测试通过。新增用例实际验证未登录/已登录时 POST PDF/Word 旧路径均 404，且无附件头；原 9 项鉴权/trace/业务回归通过。
+- 源码/配置/模块清单扫描退出 0：无文档模块导入、类型、provider、专用超时/模板/字体/图片配置、生成消息或 fpdf 依赖；业务模板目录不存在。
+- harness sync/check、tasks check 均退出 0；sync 更新 0 文件；24 项框架测试通过；123 个 docs 本地链接有效，git diff --check 通过。
+- 当前架构、配置、API 和测试说明已更新；旧任务材料仅保留历史观察，已消除指向删除源码的失效链接。无页面，ui-cases 不适用。
+- 本轮不重复 race（没有增加并发逻辑），不连接真实 MySQL、执行数据库迁移或部署；当前删除批次未提交/推送。

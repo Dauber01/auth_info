@@ -21,12 +21,10 @@ import (
 	apipb "auth_info/api/gen/api/proto"
 	bizauth "auth_info/internal/biz/auth"
 	bizdict "auth_info/internal/biz/dict"
-	bizdoc "auth_info/internal/biz/document"
 	bizhello "auth_info/internal/biz/hello"
 	"auth_info/internal/config"
 	authhdl "auth_info/internal/handler/auth"
 	dicthdl "auth_info/internal/handler/dict"
-	dochdl "auth_info/internal/handler/document"
 	hellohdl "auth_info/internal/handler/hello"
 	"auth_info/internal/pkg/trace"
 	hellosvc "auth_info/internal/service/hello"
@@ -46,9 +44,8 @@ func TestHTTPRoutingAndMCPDeadlineIsolation(t *testing.T) {
 	}
 	deps := HTTPDeps{
 		AuthUC: auth, Enforcer: enforcer, AuthHandler: authhdl.NewHandler(auth),
-		HelloHandler:    hellohdl.NewHandler(bizhello.NewUseCase(log)),
-		DictHandler:     dicthdl.NewHandler(bizdict.NewUseCase(nil, log)),
-		DocumentHandler: dochdl.NewHandler(bizdoc.NewUseCase(nil)),
+		HelloHandler: hellohdl.NewHandler(bizhello.NewUseCase(log)),
+		DictHandler:  dicthdl.NewHandler(bizdict.NewUseCase(nil, log)),
 		HelloMCPHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if _, ok := r.Context().Deadline(); ok {
 				t.Error("MCP inherited API deadline")
@@ -68,15 +65,11 @@ func TestHTTPRoutingAndMCPDeadlineIsolation(t *testing.T) {
 		t.Fatal("streaming or header policy lost")
 	}
 	for path, want := range map[string]int{
-		"/mcp": 202, "/api/v1/hello": 401, "/api/v1/dict/types": 401, "/api/v1/document/generate-pdf": 401,
+		"/mcp": 202, "/api/v1/hello": 401, "/api/v1/dict/types": 401,
 	} {
 		w := &deadlineRecorder{ResponseRecorder: httptest.NewRecorder()}
-		method := http.MethodGet
-		if strings.Contains(path, "/document/") {
-			method = http.MethodPost
-		}
 		before := time.Now()
-		httpServer.Handler.ServeHTTP(w, httptest.NewRequest(method, path, nil))
+		httpServer.Handler.ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
 		if w.Code != want {
 			t.Fatalf("%s: %d %s", path, w.Code, w.Body.String())
 		}
@@ -87,11 +80,16 @@ func TestHTTPRoutingAndMCPDeadlineIsolation(t *testing.T) {
 			continue
 		}
 		budget := cfg.Server.WriteTimeout
-		if strings.Contains(path, "/document/") {
-			budget = cfg.Server.DocumentTimeout + 5*time.Second
-		}
 		if w.deadline.Before(before.Add(budget)) || w.deadline.After(time.Now().Add(budget)) {
 			t.Fatalf("%s: unexpected write deadline %v", path, w.deadline)
+		}
+	}
+	for _, path := range []string{"/api/v1/document/generate-pdf", "/api/v1/document/generate-word"} {
+		w := httptest.NewRecorder()
+		httpServer.Handler.ServeHTTP(w, httptest.NewRequest(http.MethodPost, path, strings.NewReader("{}")))
+		if w.Code != http.StatusNotFound || w.Header().Get("Content-Disposition") != "" ||
+			w.Header().Get(trace.Header) == "" {
+			t.Fatalf("removed route %s: %d %s", path, w.Code, w.Body.String())
 		}
 	}
 	w := httptest.NewRecorder()

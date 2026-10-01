@@ -7,7 +7,6 @@ import (
 
 	bizauth "auth_info/internal/biz/auth"
 	bizdict "auth_info/internal/biz/dict"
-	bizdoc "auth_info/internal/biz/document"
 	bizhello "auth_info/internal/biz/hello"
 	"auth_info/internal/config"
 	"auth_info/internal/data"
@@ -15,7 +14,6 @@ import (
 	datadict "auth_info/internal/data/dict"
 	authhdl "auth_info/internal/handler/auth"
 	dicthdl "auth_info/internal/handler/dict"
-	dochdl "auth_info/internal/handler/document"
 	hellohdl "auth_info/internal/handler/hello"
 	"auth_info/internal/mcpserver"
 	"auth_info/internal/server"
@@ -35,12 +33,9 @@ func initializeApp(cfg *config.Config, resources *Lifecycle) (*App, error) {
 		ProvideAuthOptions,
 		bizauth.NewUseCase,
 		bizdict.NewUseCase,
-		ProvideDocumentResources,
-		bizdoc.NewUseCase,
 		hellohdl.NewHandler,
 		authhdl.NewHandler,
 		dicthdl.NewHandler,
-		dochdl.NewHandler,
 		mcpserver.NewHelloMCPHandler,
 		hellosvc.NewService,
 		wire.Struct(new(server.HTTPDeps), "*"),

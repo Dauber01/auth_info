@@ -31,3 +31,5 @@
 Wire 生成可重复、纯 build 不更改生成文件和模块清单；最终验证完成。
 
 用户后续指定仅保留 test/line；test 原先通过 config.yaml 间接继承本地参数，已归入独立 test.yaml；共享 base 保持无部署凭据。目录入口和三个命令默认统一选 test，不再读取旧 config.yaml。详见 docs/configuration.md。
+
+最新范围：仅保留 auth/dict/hello。文档生成模块和所有业务模板已删除，App 初始化不再打开模板根目录，普通 API 写期限不再包含文档特殊分支。未登录/已登录旧接口均 404；前述资源注入事实只属于删除前历史。

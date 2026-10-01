@@ -20,8 +20,8 @@ func (cfg Config) Validate() error {
 	for name, duration := range map[string]time.Duration{
 		"read_header_timeout": s.ReadHeaderTimeout, "read_timeout": s.ReadTimeout,
 		"write_timeout": s.WriteTimeout, "idle_timeout": s.IdleTimeout,
-		"request_timeout": s.RequestTimeout, "document_timeout": s.DocumentTimeout,
-		"grpc_timeout": s.GRPCTimeout,
+		"request_timeout": s.RequestTimeout,
+		"grpc_timeout":    s.GRPCTimeout,
 	} {
 		if duration < 0 {
 			return fmt.Errorf("server.%s cannot be negative", name)
@@ -58,9 +58,6 @@ func (cfg Config) Validate() error {
 	}
 	if cfg.Casbin.Model == "" {
 		return fmt.Errorf("casbin model is required")
-	}
-	if cfg.Document.TemplateDir == "" || cfg.Document.ImageTimeout <= 0 {
-		return fmt.Errorf("document requires template_dir and positive image_timeout")
 	}
 	return nil
 }

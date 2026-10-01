@@ -68,13 +68,13 @@ func TestLoadConfigPrecedenceIsolationAndEnvironmentOnlyFields(t *testing.T) {
 	writeConfig(t, dir, "base.yaml", "server:\n  port: 8100\nlog:\n  level: warn\njwt:\n  secret: fixture\n")
 	entry := writeConfig(t, dir, "entry.yaml", "includes: [base.yaml]\nserver:\n  port: 8200\n")
 	t.Setenv("APP_SERVER_PORT", "8300")
-	t.Setenv("APP_DOCUMENT_FONT_PATH", "injected.ttf")
+	t.Setenv("APP_LOG_FILE_COMPRESS", "true")
 	cfg, err := LoadConfig(entry)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if cfg.Server.Port != 8300 || cfg.Server.GRPCPort != 9300 || cfg.Log.Level != "warn" ||
-		cfg.Document.FontPath != "injected.ttf" {
+		!cfg.Log.File.Compress {
 		t.Fatalf("unexpected precedence: %+v", cfg.Server)
 	}
 	t.Setenv("APP_SERVER_PORT", "8400")

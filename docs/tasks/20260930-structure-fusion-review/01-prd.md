@@ -21,3 +21,11 @@
 - AC-12：Make 仅接受 ENV=test/line，支持 CONFIG_DIR/CONFIG_FILE 覆盖；line 的部署配置仍由 APP_* 注入，文档与命令保持一致。
 
 AC-10～12 取代 AC-03 中保留 config.yaml 目录入口的旧决策，其余架构约束保持。
+
+## 删除功能验收（2026-10-01）
+
+- AC-13：移除全部文档生成模块、Proto 及生成文件、模板和专用依赖；无运行时文档资源 provider。
+- AC-14：删除 document 配置块、字体/模板/图片参数与 document_timeout，包括默认值/校验；两环境可继续加载。
+- AC-15：旧 PDF/Word 路径在未登录和已登录时均 404；剩余 auth/dict/hello/gRPC/MCP 与公共 deadline 行为正确，生成/测试/知识记录同步。
+
+本次明确取代 AC-06 文档生成资源注入需求及 AC-09 中保留文档接口的旧边界；其余业务规则保持。

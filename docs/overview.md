@@ -33,7 +33,7 @@
 │   └── pkg/                     # logger、trace、apperr 公共能力
 ├── api/                         # API 定义
 │   ├── proto/                   # Proto 契约与依赖（统一目录）
-│   │   ├── *.proto              # 业务契约（common/auth/dict/document/hello）
+│   │   ├── *.proto              # 业务契约（common/auth/dict/hello）
 │   │   ├── buf/validate/        # Protovalidate 规则定义
 │   │   ├── google/protobuf/     # 仓库内维护的 protobuf（如 struct.proto）
 │   │   └── third_party/google/  # 第三方 protobuf 依赖
@@ -46,7 +46,7 @@
 ## 契约约定
 
 - 所有对外的请求结构和响应结构统一由 `api/proto/` 生成，HTTP 和 gRPC 共用同一套契约。
-- `api/proto/` 统一管理业务 proto 与依赖：业务文件（`common.proto`、`auth.proto`、`dict.proto`、`document.proto`、`hello.proto`）+ `buf/validate` + `third_party/google/protobuf`。
+- `api/proto/` 统一管理业务 proto 与依赖：业务文件（`common.proto`、`auth.proto`、`dict.proto`、`hello.proto`）+ `buf/validate` + `third_party/google/protobuf`。
 - 所有业务 proto 统一使用 `option go_package = "auth_info/api/gen/api/proto;apipb"`，生成代码集中在 `api/gen/api/proto/`。
 - 参数校验统一使用 Protovalidate，规则在业务 proto 中通过 `buf.validate` 注解声明（例如 `(buf.validate.field).string.max_len`）。
 - 为了支持 `buf.validate` 导入，仓库内提供 `api/proto/buf/validate/validate.proto`，并在 proto 生成时额外包含 `--proto_path=api/proto/third_party --proto_path=. --proto_path=api/proto`。

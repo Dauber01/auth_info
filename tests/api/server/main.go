@@ -22,12 +22,10 @@ import (
 
 	bizauth "auth_info/internal/biz/auth"
 	bizdict "auth_info/internal/biz/dict"
-	bizdoc "auth_info/internal/biz/document"
 	bizhello "auth_info/internal/biz/hello"
 	"auth_info/internal/config"
 	authhandler "auth_info/internal/handler/auth"
 	dicthandler "auth_info/internal/handler/dict"
-	dochandler "auth_info/internal/handler/document"
 	hellohandler "auth_info/internal/handler/hello"
 	"auth_info/internal/mcpserver"
 	"auth_info/internal/pkg/apperr"
@@ -86,13 +84,12 @@ func run() error {
 	if _, err := enforcer.AddPolicy("user", "/api/v1/hello", "GET"); err != nil {
 		return fmt.Errorf("add fixture policy: %w", err)
 	}
-	cfg.Server = config.ServerConfig{Mode: gin.TestMode, RequestTimeout: time.Second, DocumentTimeout: time.Second}
+	cfg.Server = config.ServerConfig{Mode: gin.TestMode, RequestTimeout: time.Second}
 	hello := bizhello.NewUseCase(logger)
 	httpServer, err := appserver.NewHTTPServer(cfg, logger, appserver.HTTPDeps{
 		AuthUC: auth, Enforcer: enforcer, AuthHandler: authhandler.NewHandler(auth),
 		HelloHandler: hellohandler.NewHandler(hello), HelloMCPHandler: mcpserver.NewHelloMCPHandler(hello),
-		DictHandler:     dicthandler.NewHandler(bizdict.NewUseCase(nil, logger)),
-		DocumentHandler: dochandler.NewHandler(bizdoc.NewUseCase(nil)),
+		DictHandler: dicthandler.NewHandler(bizdict.NewUseCase(nil, logger)),
 	})
 	if err != nil {
 		return err

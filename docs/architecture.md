@@ -6,9 +6,9 @@
 ## 装配与生命周期
 
 - [bootstrap](../internal/app/bootstrap.go) 验证配置、创建 Lifecycle，再调用 Wire 生成的 initializeApp。provider 失败时逆序回收已取得资源，成功后所有权归 App。
-- [providers](../internal/app/providers.go) 将部署配置转换为业务所需的 auth.Options/document.Resources，注册 logger、MySQL、document 的清理函数。
+- [providers](../internal/app/providers.go) 将部署配置转换为业务所需的 auth.Options，注册 logger、MySQL 的清理函数。
 - [App](../internal/app/app.go) 只协调已构建的 HTTP/gRPC：先取得全部监听端口，再启动服务；任一失败关闭监听器及资源。Stop 支持并发/重复调用，所有调用等待相同的关闭结果。
-- [Lifecycle](../internal/app/lifecycle.go) 逆序清理并汇总错误；服务先停止，文档资源与数据库随后关闭，logger 最后关闭。注册发生在初始化阶段，运行时不添加 hook。
+- [Lifecycle](../internal/app/lifecycle.go) 逆序清理并汇总错误；服务先停止，数据库随后关闭，logger 最后关闭。注册发生在初始化阶段，运行时不添加 hook。
 - HTTP Shutdown 超时后关闭活动连接；gRPC GracefulStop 超时后强制 Stop。server.shutdown_timeout 为两者共享的优雅关闭预算；业务仍需响应 context 取消。强制关闭不等待忽略取消的 handler；Go 无法强杀这类 goroutine，它们只能在业务返回后结束。清理 hook 不包含在服务 drain 预算中，应保持短且可结束。
 - [wire.go](../internal/app/wire.go) 声明构造关系，wire_gen.go 不手改；运行 `make wire` 生成。
 
@@ -24,24 +24,20 @@ MCP  → 同一 HTTP 全局中间件 → mcpserver → biz
 gRPC → trace/错误/期限 → Protovalidate → service → biz
 ```
 
-- `/api/v1/auth` 公开注册；hello、dict、document 使用 JWT → Casbin 保护组。
+- `/api/v1/auth` 公开注册；hello、dict 使用 JWT → Casbin 保护组。
 - `/mcp` 保留独立注册，未加入 JWT/Casbin，也不套用普通 API 请求/写响应期限。改变此边界须单独评审契约。
 - gRPC 当前只注册 HelloService；保留已有 Proto，Hello name 本身没有长度校验规则。
 - service 是 gRPC 协议适配层，业务编排在 biz。handler 不访问 ORM；业务接口和模型不依赖 Gin/GORM/部署配置。
 - HTTP 错误仍返回数值 code；TraceID 使用 X-Trace-ID 响应头。gRPC 使用 x-trace-id metadata。
-- HTTP request_timeout、document_timeout、grpc_timeout 是协作式取消，不后台执行或强杀 handler。WriteTimeout 仅给普通 API 设置连接写期限；document 的写预算至少为 document_timeout + 5s，MCP 不设置短写期限。HTTP ReadHeader/Read/IdleTimeout 仍约束连接。
+- HTTP request_timeout、grpc_timeout 是协作式取消，不后台执行或强杀 handler。WriteTimeout 仅给普通 API 设置连接写期限；MCP 不设置短写期限。HTTP ReadHeader/Read/IdleTimeout 仍约束连接。
 
-## 模块与外部资源
+## 业务模块
 
 | 模块 | 业务边界 | 实现/适配 |
 | --- | --- | --- |
 | auth | [业务/用户接口](../internal/biz/auth/)；仅接收 JWT Options | [data/auth](../internal/data/auth/)、[HTTP](../internal/handler/auth/) |
 | dict | [业务/仓储接口/模型](../internal/biz/dict/) | [data/dict](../internal/data/dict/)、[HTTP](../internal/handler/dict/) |
-| document | [渲染与 Resources 接口](../internal/biz/document/) | [data/document](../internal/data/document/) 管理模板目录、字体与 HTTP client；[HTTP](../internal/handler/document/) 返回文件 |
 | hello | [共享业务](../internal/biz/hello/) | HTTP、[gRPC](../internal/service/hello/)、[MCP](../internal/mcpserver/hello.go) |
-
-文档资源由配置注入：模板目录用 os.Root 限制路径及符号链接逃逸，字体可选，远端图片有期限和 10 MiB 上限。
-模板/字体路径相对进程工作目录解析；includes 相对声明文件所在目录。PDF 按 section/表格行检查取消，Word 在资源/图片与返回边界检查取消；库内单次渲染不是可抢占任务。
 
 ## 事务
 
@@ -58,5 +54,7 @@ gRPC → trace/错误/期限 → Protovalidate → service → biz
 - [config](../internal/config/) 使用独立 Viper，优先级：默认值 < includes 顺序合并 < 入口文件 < APP_*。LoadConfig 接受具体文件或目录；空路径默认 test 文件，目录读取 test.yaml。环境入口仅 test/line，详情见 [环境配置](configuration.md)。
 - `make build` 只编译；`make generate` 显式生成；`make mod-tidy` 显式更新依赖；Wire 版本由 go.mod/tool 锁定。
 - 数据库迁移、权限初始化仍是 [migrate](../cmd/migrate/main.go)、[seed](../cmd/seed/main.go) 显式操作，命令也负责关闭连接与日志。
+
+文档生成功能已于 2026-10-01 按用户要求移除，当前业务仅 auth、dict、hello。
 
 复核触发：provider、服务注册、中间件、配置、事务、日志输出或资源访问边界改变。

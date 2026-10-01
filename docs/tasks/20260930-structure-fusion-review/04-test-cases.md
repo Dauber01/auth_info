@@ -1,5 +1,6 @@
 # 重构验收用例
 
+下表保留架构批次历史映射；最新文档功能删除验收见本文件末尾，DOC 条目已停止适用。
 2026-10-01 按 PRD AC-01～09 与实际 diff 更新；沿用原有行为断言，不从新实现推导业务预期。
 公共清理规则：所有临时文件由 t.TempDir 删除；测试服务器/连接显式关闭；事务库为独立临时 SQLite。
 Go 测试不连接部署数据库；Python fixture 用内存账号，runner 退出时清理进程和临时产物。
@@ -43,3 +44,16 @@ Go 测试不连接部署数据库；Python fixture 用内存账号，runner 退�
 | CFG-05 | 11/12 | make config 及 run/migrate/seed dry-run，默认/test/line/非法 ENV，自定义目录/文件 | 路径选择一致，非法环境早报错，覆盖有效 | 手动命令断言，无服务启动或数据库写入 |
 
 本轮不修改 API/页面/Proto 行为，复用已有 Go 回归与前轮 API 记录；不增加重复 API 测试。
+
+## 删除文档功能验收
+
+前述 DOC-01～03 为历史测试记录，随模块删除停止适用。本轮 AC-13～15：
+
+| Case ID | AC | 前置/操作 | 预期与自动化 | 清理 |
+| --- | --- | --- | --- | --- |
+| REMOVE-01 | 13/15 | 真实 server 装配，POST 两条旧 document 路径 | 均 404、没有附件头，TraceID 保留；internal/server/server_test.go | httptest 无外部资源 |
+| REMOVE-02 | 15 | 隔离 API fixture；分别未登录/登录后 POST 旧 PDF/Word 路径 | 均 404；其余 9 项 API 用例保持；tests/api/test_auth.py | runner 清理内存账号/进程 |
+| REMOVE-03 | 14 | 不设置文档配置，加载 test/line/临时文件；APP-only 字段改用 log.file.compress | 配置可加载、覆盖仍有效；复用 internal/config 的相关用例 | 临时文件/环境自动恢复 |
+| REMOVE-04 | 13/15 | 正式生成、mod-tidy、扫描运行源码/配置/模块清单与模板目录 | 无已删除模块/配置/依赖，生成正确，剩余功能全量测试和构建通过 | 仅仓库内生成与清单更新 |
+
+无页面改动；相关渲染测试与夹具随模块删除，不替换成占位测试。
