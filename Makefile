@@ -1,131 +1,101 @@
-.PHONY: help proto wire build run clean install-tools migrate seed mod-tidy test test-api fmt lint all sync-harness check-harness
+.PHONY: help config generate proto wire build run dev clean install-tools migrate seed mod-tidy test test-api fmt lint all sync-harness check-harness
 
-# 变量定义
 PROJECT_NAME := auth_info
 BIN_DIR := bin
-API_DIR := api
-PROTO_DIR := $(API_DIR)/proto
-GEN_DIR := $(API_DIR)/gen
-MAIN_GO := cmd/main/main.go
-MIGRATE_GO := cmd/migrate/main.go
-SEED_GO := cmd/seed/main.go
 OUTPUT := $(BIN_DIR)/$(PROJECT_NAME)
-CONFIG_DIR := ./config
+PROTO_DIR := api/proto
+GEN_DIR := api/gen
 PYTHON ?= python3
+ENV ?=
+CONFIG_DIR ?= ./config
+CONFIG_FILE ?= $(if $(ENV),$(CONFIG_DIR)/$(ENV).yaml,$(CONFIG_DIR))
+PROTOC_GO_VERSION := v1.36.11
+PROTOC_GRPC_VERSION := v1.5.1
 GOPATH_BIN := $(shell go env GOPATH)/bin
 export PATH := $(GOPATH_BIN):$(PATH)
 
-# 颜色定义
-BLUE := \033[0;34m
-GREEN := \033[0;32m
-NC := \033[0m # No Color
-
-## help: 显示帮助信息
+## help: 显示可用命令
 help:
-	@echo "$(BLUE)Available commands:$(NC)"
-	@grep -E '##' Makefile | grep -v grep | sed 's/## //' | awk '{print "  $(GREEN)" $$1 "$(NC) " substr($$0, index($$0, $$2))}'
+	@awk '/^## / {sub(/^## /, ""); print}' Makefile
 
-## sync-harness: 同步 Codex 和 Claude Code 项目配置
+## config: 显示环境与配置入口
+config:
+	@echo "ENV=$(ENV) CONFIG_FILE=$(CONFIG_FILE)"
+
+## sync-harness: 同步共享 agent 入口
 sync-harness:
 	@$(PYTHON) .agents/framework/harness.py sync --root .
 
-## check-harness: 检查双 harness 配置和共享 skills
+## check-harness: 检查配置、知识链接与框架测试
 check-harness:
 	@$(PYTHON) .agents/framework/harness.py check --root .
 	@$(PYTHON) -B -m unittest discover -s .agents/framework/tests
 
-## test-api: 启动隔离服务并运行 Python API 测试
+## test-api: 使用隔离 HTTP fixture 运行 Python 测试
 test-api:
 	@$(PYTHON) -B tests/run_api.py
 
-## install-tools: 安装 protoc, protoc-gen-go, protoc-gen-go-grpc 工具
+## install-tools: 显式安装固定版本的 Go 生成插件（protoc 需预装）
 install-tools:
-	@echo "$(BLUE)Checking and installing tools...$(NC)"
-	@which protoc > /dev/null 2>&1 || (echo "Installing protoc..." && go install google.golang.org/protobuf/cmd/protoc-gen-go@latest)
-	@which protoc-gen-go > /dev/null 2>&1 || go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-	@which protoc-gen-go-grpc > /dev/null 2>&1 || go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-	@echo "$(GREEN)✓ Tools installed$(NC)"
+	@command -v protoc >/dev/null || { echo "Install protoc first"; exit 1; }
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GO_VERSION)
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GRPC_VERSION)
 
-## proto: 生成 protobuf Go 代码
-proto: install-tools
-	@echo "$(BLUE)Generating proto code...$(NC)"
+## proto: 显式生成 Proto，不自动安装工具
+proto:
+	@command -v protoc >/dev/null && command -v protoc-gen-go >/dev/null && command -v protoc-gen-go-grpc >/dev/null
 	@mkdir -p $(GEN_DIR)
-	@protoc \
-		--proto_path=$(PROTO_DIR)/third_party \
-		--proto_path=. \
-		--proto_path=$(PROTO_DIR) \
-		--go_out=$(GEN_DIR) \
-		--go_opt=paths=source_relative \
-		--go-grpc_out=$(GEN_DIR) \
-		--go-grpc_opt=paths=source_relative \
-		$(PROTO_DIR)/*.proto
-	@echo "$(GREEN)✓ Proto code generated$(NC)"
+	protoc --proto_path=$(PROTO_DIR)/third_party --proto_path=. --proto_path=$(PROTO_DIR) \
+		--go_out=$(GEN_DIR) --go_opt=paths=source_relative \
+		--go-grpc_out=$(GEN_DIR) --go-grpc_opt=paths=source_relative $(PROTO_DIR)/*.proto
 
-## wire: 生成 Wire 依赖注入代码
+## wire: 使用固定版本生成 Wire
 wire:
-	@echo "$(BLUE)Generating Wire code...$(NC)"
-	@go run github.com/google/wire/cmd/wire@latest ./internal/app
-	@echo "$(GREEN)✓ Wire code generated$(NC)"
+	go run -mod=readonly github.com/google/wire/cmd/wire ./internal/app
 
-## mod-tidy: 更新依赖
+## generate: 显式更新所有生成代码
+generate: proto wire
+
+## mod-tidy: 显式更新依赖清单
 mod-tidy:
-	@echo "$(BLUE)Running go mod tidy...$(NC)"
-	@go mod tidy
-	@echo "$(GREEN)✓ Dependencies updated$(NC)"
+	go mod tidy
 
-## migrate: 执行数据库迁移（独立命令）
-migrate: mod-tidy
-	@echo "$(BLUE)Running migrations...$(NC)"
-	@go run $(MIGRATE_GO) -config $(CONFIG_DIR)
-	@echo "$(GREEN)✓ Migrations complete$(NC)"
-
-## seed: 初始化默认权限策略（独立命令）
-seed: mod-tidy
-	@echo "$(BLUE)Seeding default policies...$(NC)"
-	@go run $(SEED_GO) -config $(CONFIG_DIR)
-	@echo "$(GREEN)✓ Policies seeded$(NC)"
-
-## build: 编译项目
-build: mod-tidy proto wire
-	@echo "$(BLUE)Building project...$(NC)"
+## build: 仅编译，不更改依赖或生成代码
+build:
 	@mkdir -p $(BIN_DIR)
-	@go build -o $(OUTPUT) $(MAIN_GO)
-	@echo "$(GREEN)✓ Build complete: $(OUTPUT)$(NC)"
+	go build -mod=readonly -o $(OUTPUT) ./cmd/main
 
-## run: 生成代码并运行项目
-run: clean build
-	@echo "$(BLUE)Starting application...$(NC)"
-	@$(OUTPUT) -config $(CONFIG_DIR)
+## run: 构建并使用 CONFIG_FILE 启动
+run: build
+	$(OUTPUT) -config "$(CONFIG_FILE)"
 
-## dev: 快速开发模式（不清理生成的代码）
-dev: proto wire build
-	@echo "$(BLUE)Starting application in dev mode...$(NC)"
-	@$(OUTPUT) -config $(CONFIG_DIR)
+## dev: 显式生成、构建并启动
+dev: generate
+	@$(MAKE) run
 
-## clean: 清理生成的文件和可执行文件
+## migrate: 显式数据库迁移
+migrate:
+	go run -mod=readonly ./cmd/migrate -config "$(CONFIG_FILE)"
+
+## seed: 显式初始化权限策略
+seed:
+	go run -mod=readonly ./cmd/seed -config "$(CONFIG_FILE)"
+
+## clean: 仅清理构建产物
 clean:
-	@echo "$(BLUE)Cleaning up...$(NC)"
-	@rm -rf $(BIN_DIR)
-	@rm -rf $(GEN_DIR)/*.pb.go $(GEN_DIR)/*_grpc.pb.go
-	@echo "$(GREEN)✓ Clean complete$(NC)"
+	rm -rf $(BIN_DIR)
 
-## test: 运行单元测试
+## test: 全部 Go 测试
 test:
-	@echo "$(BLUE)Running tests...$(NC)"
-	@go test -v ./...
+	go test -mod=readonly -count=1 ./...
 
-## fmt: 格式化代码
+## fmt: 格式化 Go 文件
 fmt:
-	@echo "$(BLUE)Formatting code...$(NC)"
-	@go fmt ./...
-	@echo "$(GREEN)✓ Code formatted$(NC)"
+	go fmt ./...
 
-## lint: 运行代码检查
+## lint: Go 静态检查
 lint:
-	@echo "$(BLUE)Running linter...$(NC)"
-	@go vet ./...
-	@echo "$(GREEN)✓ Lint complete$(NC)"
+	go vet -mod=readonly ./...
 
-## all: 执行所有操作（clean, proto, wire, build）
-all: clean proto wire build
-	@echo "$(GREEN)✓ All operations complete$(NC)"
+## all: 编译并测试
+all: build test

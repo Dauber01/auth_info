@@ -6,7 +6,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"auth_info/internal/apperr"
+	"auth_info/internal/pkg/apperr"
 )
 
 type stubDictRepo struct {

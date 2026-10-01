@@ -1,29 +1,52 @@
+// Package config loads an isolated, validated application configuration.
 package config
 
-import (
-	"time"
+import "time"
 
-	"github.com/spf13/viper"
-)
-
+// Config contains deployment settings; business packages receive narrower options.
 type Config struct {
-	Server ServerConfig `mapstructure:"server"`
-	Log    LogConfig    `mapstructure:"log"`
-	MySQL  MySQLConfig  `mapstructure:"mysql"`
-	JWT    JWTConfig    `mapstructure:"jwt"`
-	Casbin CasbinConfig `mapstructure:"casbin"`
+	Server   ServerConfig   `mapstructure:"server"`
+	Log      LogConfig      `mapstructure:"log"`
+	MySQL    MySQLConfig    `mapstructure:"mysql"`
+	JWT      JWTConfig      `mapstructure:"jwt"`
+	Casbin   CasbinConfig   `mapstructure:"casbin"`
+	Document DocumentConfig `mapstructure:"document"`
 }
 
+// ServerConfig separates connection, ordinary request and long operation deadlines.
 type ServerConfig struct {
-	Port int    `mapstructure:"port"`
-	Mode string `mapstructure:"mode"`
+	Port              int           `mapstructure:"port"`
+	GRPCPort          int           `mapstructure:"grpc_port"`
+	Mode              string        `mapstructure:"mode"`
+	ReadHeaderTimeout time.Duration `mapstructure:"read_header_timeout"`
+	ReadTimeout       time.Duration `mapstructure:"read_timeout"`
+	WriteTimeout      time.Duration `mapstructure:"write_timeout"`
+	IdleTimeout       time.Duration `mapstructure:"idle_timeout"`
+	RequestTimeout    time.Duration `mapstructure:"request_timeout"`
+	DocumentTimeout   time.Duration `mapstructure:"document_timeout"`
+	GRPCTimeout       time.Duration `mapstructure:"grpc_timeout"`
+	ShutdownTimeout   time.Duration `mapstructure:"shutdown_timeout"`
 }
 
+// LogConfig supports console output and optional local rotation only.
 type LogConfig struct {
-	Level  string `mapstructure:"level"`
-	Format string `mapstructure:"format"`
+	Level  string        `mapstructure:"level"`
+	Format string        `mapstructure:"format"`
+	Access bool          `mapstructure:"access"`
+	File   LogFileConfig `mapstructure:"file"`
 }
 
+// LogFileConfig controls bounded local file retention.
+type LogFileConfig struct {
+	Enabled    bool   `mapstructure:"enabled"`
+	Path       string `mapstructure:"path"`
+	MaxSizeMB  int    `mapstructure:"max_size_mb"`
+	MaxBackups int    `mapstructure:"max_backups"`
+	MaxAgeDays int    `mapstructure:"max_age_days"`
+	Compress   bool   `mapstructure:"compress"`
+}
+
+// MySQLConfig describes a single database and its pool.
 type MySQLConfig struct {
 	Host     string          `mapstructure:"host"`
 	Port     int             `mapstructure:"port"`
@@ -34,6 +57,7 @@ type MySQLConfig struct {
 	Pool     MySQLPoolConfig `mapstructure:"pool"`
 }
 
+// MySQLPoolConfig bounds connection usage.
 type MySQLPoolConfig struct {
 	MaxOpenConns    int           `mapstructure:"max_open_conns"`
 	MaxIdleConns    int           `mapstructure:"max_idle_conns"`
@@ -41,28 +65,20 @@ type MySQLPoolConfig struct {
 	ConnMaxIdleTime time.Duration `mapstructure:"conn_max_idle_time"`
 }
 
+// JWTConfig configures token signing and expiry in hours.
 type JWTConfig struct {
 	Secret string `mapstructure:"secret"`
-	Expire int    `mapstructure:"expire"` // hours
+	Expire int    `mapstructure:"expire"`
 }
 
+// CasbinConfig selects the RBAC model.
 type CasbinConfig struct {
 	Model string `mapstructure:"model"`
 }
 
-func LoadConfig(path string) (*Config, error) {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(path)
-
-	if err := viper.ReadInConfig(); err != nil {
-		return nil, err
-	}
-
-	var cfg Config
-	if err := viper.Unmarshal(&cfg); err != nil {
-		return nil, err
-	}
-
-	return &cfg, nil
+// DocumentConfig configures local resources and image downloads.
+type DocumentConfig struct {
+	TemplateDir  string        `mapstructure:"template_dir"`
+	FontPath     string        `mapstructure:"font_path"`
+	ImageTimeout time.Duration `mapstructure:"image_timeout"`
 }

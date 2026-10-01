@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"log"
 	"os"
@@ -11,40 +13,33 @@ import (
 	"auth_info/internal/config"
 )
 
-func main() {
-	configPath := flag.String("config", "./config", "配置文件路径")
-	flag.Parse()
-
-	cfg, err := config.LoadConfig(*configPath)
+func run(ctx context.Context, path string) error {
+	cfg, err := config.LoadConfig(path)
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		return err
 	}
-
 	application, err := app.InitializeApp(cfg)
 	if err != nil {
-		log.Fatalf("Failed to initialize app: %v", err)
+		return err
 	}
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-	runErrCh := make(chan error, 1)
-	go func() {
-		runErrCh <- application.Run()
-	}()
-
+	result := make(chan error, 1)
+	go func() { result <- application.Run() }()
 	select {
-	case runErr := <-runErrCh:
-		if runErr != nil {
-			log.Fatalf("Server error: %v", runErr)
-		}
-	case sig := <-sigChan:
-		log.Printf("Received signal %s, shutting down...", sig)
-		if err := application.Stop(); err != nil {
-			log.Fatalf("Server stop error: %v", err)
-		}
-		if runErr := <-runErrCh; runErr != nil {
-			log.Fatalf("Server error during shutdown: %v", runErr)
-		}
+	case err := <-result:
+		return err
+	case <-ctx.Done():
+		stopErr := application.Stop()
+		return errors.Join(stopErr, <-result)
+	}
+}
+
+func main() {
+	path := flag.String("config", "./config", "配置文件或包含 config.yaml 的目录")
+	flag.Parse()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	if err := run(ctx, *path); err != nil {
+		log.Print(err)
+		os.Exit(1)
 	}
 }

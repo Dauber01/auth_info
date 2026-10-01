@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -24,7 +25,7 @@ const (
 	mysqlPingTimeout            = 5 * time.Second
 )
 
-func NewDB(cfg *config.Config, log *zap.Logger) (*gorm.DB, error) {
+func NewDB(cfg *config.Config, log *zap.Logger) (db *gorm.DB, err error) {
 	c := cfg.MySQL
 	pool, err := normalizeMySQLPoolConfig(c.Pool)
 	if err != nil {
@@ -36,25 +37,28 @@ func NewDB(cfg *config.Config, log *zap.Logger) (*gorm.DB, error) {
 		c.User, c.Password, c.Host, c.Port, c.DBName, c.Charset,
 	)
 
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: gormlogger.Default.LogMode(gormlogger.Silent),
-	})
+	sqlDB, err := sql.Open("mysql", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("connect mysql: %w", err)
+		return nil, fmt.Errorf("open mysql pool: %w", err)
 	}
-
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, fmt.Errorf("get mysql sql db: %w", err)
-	}
-
+	// The provider owns the pool until initialization completes, including GORM version detection.
+	defer func() {
+		if err != nil {
+			err = errors.Join(err, sqlDB.Close())
+		}
+	}()
 	applyMySQLPoolConfig(sqlDB, pool)
-
 	ctx, cancel := context.WithTimeout(context.Background(), mysqlPingTimeout)
 	defer cancel()
 	if err = sqlDB.PingContext(ctx); err != nil {
-		_ = sqlDB.Close()
 		return nil, fmt.Errorf("ping mysql: %w", err)
+	}
+	db, err = gorm.Open(mysql.New(mysql.Config{Conn: sqlDB}), &gorm.Config{
+		DisableAutomaticPing: true,
+		Logger:               gormlogger.Default.LogMode(gormlogger.Silent),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("initialize mysql: %w", err)
 	}
 
 	log.Info("MySQL connected",
@@ -156,4 +160,13 @@ func SeedDefaultPolicies(e *casbin.Enforcer) error {
 		}
 	}
 	return nil
+}
+
+// CloseDB closes the SQL pool owned by the caller.
+func CloseDB(db *gorm.DB) error {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return fmt.Errorf("get mysql pool: %w", err)
+	}
+	return sqlDB.Close()
 }

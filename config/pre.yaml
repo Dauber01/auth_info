@@ -1,0 +1,3 @@
+# Supply APP_MYSQL_* and APP_JWT_SECRET through the deployment environment.
+includes:
+  - includes/base.yaml

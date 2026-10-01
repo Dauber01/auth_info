@@ -1,0 +1,6 @@
+includes:
+  - config.yaml
+server:
+  mode: test
+log:
+  level: warn

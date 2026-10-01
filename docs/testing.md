@@ -14,12 +14,12 @@ make test-api
 runner 构建临时 Go fixture，在 127.0.0.1 的随机端口运行，再由 Python unittest
 通过真实 HTTP 请求验证 API，结束时关闭子进程并删除临时构建产物。
 
-fixture 位于 [tests/api/server](../tests/api/server/main.go)，使用真实 auth/hello 路由、
-handler、业务用例、Proto 校验、JWT/Casbin 与错误中间件；用户 repository 使用内存实现。
+fixture 位于 [tests/api/server](../tests/api/server/main.go)，使用真实 server.NewHTTPServer 装配、auth/hello 路由、
+handler、业务用例、Proto 校验、JWT/Casbin、TraceID 与错误中间件；用户 repository 使用内存实现。
 它不启动项目数据库，不运行迁移或 seed。JWT 测试密钥在启动时临时生成，不写入仓库。
 
 当前范围：注册/登录成功、重复注册、输入非法、错误凭据、缺失/无效 Token，以及
-登录后访问受保护 hello 接口。用例位于 [tests/api/test_auth.py](../tests/api/test_auth.py)。
+登录后访问受保护 hello 接口、TraceID 透传及已认证但无策略的 403。用例位于 [tests/api/test_auth.py](../tests/api/test_auth.py)。
 每个用例使用独立用户，整个 fixture 随每次 runner 执行重建。
 结果不能代表 MySQL、完整应用启动、gRPC、所有业务模块或浏览器 UI 已验证。
 
@@ -38,3 +38,15 @@ Go 单元测试继续与被测包同目录。按变更运行受影响包，公�
 用例及原型保存在 docs/tasks 的对应任务目录，格式见 [任务约定](tasks/README.md)。
 API 测试通过不能代替页面点击与逐步断言。没有页面时标记不适用及原因；受阻时记录
 缺少的环境与下一步，不编造截图、控件或成功结果。
+
+## 架构回归（2026-10-01）
+
+App 测试覆盖初始化失败回收、第二端口失败回收、并发幂等停止与关闭超时；server 测试验证 HTTP 公开/保护路由、MCP deadline 例外和真实 gRPC 调用。
+config 测试覆盖 includes/APP 优先级和多次加载隔离。事务测试使用临时 SQLite，真实 auth/dict repo 验证提交、回滚及跨池/嵌套拒绝，不代表 MySQL 方言全部验证。
+文档测试使用内存 DOCX/JSON 与临时目录，保留文字/图片/富文本断言，不生成仓库内测试产物。
+
+```sh
+go test -race -count=1 -timeout=120s ./internal/app ./internal/server ./internal/config ./internal/middleware ./internal/pkg/... ./internal/data/shared ./internal/data/document ./internal/biz/document
+```
+
+HTTP fixture/httptest 与生命周期测试需要允许本机临时端口；端口权限错误应单独记录，不能当作断言失败或测试通过。

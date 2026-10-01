@@ -16,8 +16,8 @@ make proto            # 从 .proto 文件生成 Go 代码
 make wire             # 生成 Wire 依赖注入代码（wire_gen.go）
 
 # 构建与运行
-make run              # 清理 → proto → wire → 构建 → 运行（首次或完整重建）
-make dev              # 快速重建（跳过 clean，适合开发迭代）
+make run              # 仅构建并运行，支持 ENV / CONFIG_FILE
+make dev              # 显式生成 Proto/Wire，再构建运行
 
 # 数据库
 make migrate          # 执行数据库迁移（cmd/migrate）
@@ -26,17 +26,17 @@ make seed             # 初始化 Casbin 默认策略（cmd/seed，首次部署�
 # 质量检查
 make fmt              # go fmt 格式化
 make lint             # go vet 静态分析
-make test             # go test -v ./...（运行全部测试）
+make test             # go test -mod=readonly -count=1 ./...
 make test-api         # Python 调用本机隔离服务，验证真实 HTTP API
 ```
 
 运行后访问：
 - HTTP API：`http://localhost:8080`
-- gRPC：`localhost:9080`（= HTTP port + 1000）
+- gRPC：默认 `localhost:9080`；可指定 server.grpc_port，省略时使用 HTTP port + 1000
 
-`make proto` 的工具安装和 `make wire` 可能联网获取 Go 工具；`make build` 还会 tidy、
-生成 Proto 与 Wire。执行前确认本机依赖，普通测试使用 `make test` 或对应包的 `go test`。
-当前 `install-tools` 在缺少 protoc 时也仅调用 Go 插件安装，不能代替系统安装 protoc。
+`make build` 以 -mod=readonly 编译，不更新依赖或生成代码。`make generate` 显式生成，
+`make mod-tidy` 显式更新依赖；`make wire` 使用 go.mod 的 Wire tool 锁定版本。
+`make install-tools` 检查已安装的 protoc，再安装固定版本的 Go 插件；不会安装 protoc。
 
 ## 架构概览
 
@@ -68,14 +68,14 @@ gRPC Request
 
 ## 错误处理规范
 
-使用 `internal/apperr/apperr.go` 中定义的错误码，该包负责将应用错误映射到 HTTP 状态码和 gRPC 状态码：
+使用 `internal/pkg/apperr/apperr.go` 中定义的错误码，该包负责将应用错误映射到 HTTP 状态码和 gRPC 状态码：
 
 ```go
 apperr.New(apperr.CodeNotFound, "user not found")
 apperr.Wrap(apperr.CodeInternal, "db query failed", err)
 ```
 
-`middleware/error.go` 全局拦截 panic 和错误，统一转换响应格式。
+`middleware/error.go` 处理返回错误，`middleware/recovery.go` 处理 panic，均保留数值 code。
 
 ## Go 代码规范
 
@@ -143,7 +143,7 @@ logger.Error(
 - handler 只负责协议转换、绑定、校验和响应，不承载业务规则。
 - biz 负责业务规则和用例编排，不依赖 Gin、GORM 等传输或持久化实现细节。
 - data 负责持久化和外部数据访问，不决定 HTTP 或 gRPC 状态码。
-- 新依赖优先通过 Wire 注入，不使用可变全局变量或隐藏的单例。
+- 新依赖优先通过 Wire 注入，不使用可变全局变量或隐藏的单例。资源 provider 在 App Lifecycle 注册清理；错误退出也必须回收。
 - 不跨层直接访问实现，例如 handler 不直接操作 GORM，data 不直接构造 HTTP 响应。
 
 ### 安全与数据
@@ -168,12 +168,15 @@ logger.Error(
 
 - JWT：HS256 签名，Claims 含 `UserID/Username/Role`，有效期由 `config.yaml` 的 `jwt.expire` 控制
 - RBAC：Casbin v3 + GORM 适配器，策略存储在数据库 `casbin_rule` 表；`make seed` 初始化默认策略（admin 全访问，user 访问 GET 路由）
-- 中间件顺序固定：ErrorHandler → JWTAuth → CasbinAuth
+- HTTP 全局中间件：TraceID → AccessLog（可关）→ Recovery → ErrorHandler；保护组先 JWTAuth → CasbinAuth，再进入路由超时与 handler。
 
 ## 配置
 
-主配置文件：`config/config.yaml`，通过 Viper 加载。
-[LoadConfig](../internal/config/config.go) 使用 `AddConfigPath`，所以 `-config` 接收目录。
+旧入口 `config/config.yaml` 继续支持。[LoadConfig](../internal/config/load.go) 使用独立 Viper，
+`-config` 可接收具体 YAML 或含 config.yaml 的目录；优先级为默认值、includes、入口文件、APP_* 环境变量。
+例如 `make run ENV=dev`、`make run CONFIG_FILE=./config/pre.yaml`。pre/line 不含凭据，需注入 APP_JWT_SECRET 和 APP_MYSQL_*。
+超时、日志、document 资源配置见 [基础配置](../config/includes/base.yaml)。
+本地滚动文件通过 log.file.enabled 开启，日志不上传 ES 或其他远端服务。
 Makefile 的构建产物为 `bin/auth_info`：
 
 ```bash
@@ -190,3 +193,5 @@ Makefile 的构建产物为 `bin/auth_info`：
 go test -v ./internal/biz/auth/...
 go test -v ./internal/handler/...
 ```
+
+2026-10-01 架构调整：详细的 server/lifecycle、事务与文档资源边界见 [架构](architecture.md)。

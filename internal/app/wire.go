@@ -17,23 +17,25 @@ import (
 	dicthdl "auth_info/internal/handler/dict"
 	dochdl "auth_info/internal/handler/document"
 	hellohdl "auth_info/internal/handler/hello"
-	"auth_info/internal/logger"
 	"auth_info/internal/mcpserver"
+	"auth_info/internal/server"
 	hellosvc "auth_info/internal/service/hello"
 )
 
-func InitializeApp(cfg *config.Config) (*App, error) {
+func initializeApp(cfg *config.Config, resources *Lifecycle) (*App, error) {
 	wire.Build(
-		logger.NewLogger,
-		data.NewDB,
+		ProvideLogger,
+		ProvideDB,
 		data.NewEnforcer,
 		dataauth.NewUserRepository,
 		datadict.NewDictRepository,
 		wire.Bind(new(bizauth.UserRepository), new(*dataauth.UserRepo)),
 		wire.Bind(new(bizdict.DictRepository), new(*datadict.DictRepo)),
 		bizhello.NewUseCase,
+		ProvideAuthOptions,
 		bizauth.NewUseCase,
 		bizdict.NewUseCase,
+		ProvideDocumentResources,
 		bizdoc.NewUseCase,
 		hellohdl.NewHandler,
 		authhdl.NewHandler,
@@ -41,7 +43,9 @@ func InitializeApp(cfg *config.Config) (*App, error) {
 		dochdl.NewHandler,
 		mcpserver.NewHelloMCPHandler,
 		hellosvc.NewService,
-		wire.Struct(new(AppDeps), "*"),
+		wire.Struct(new(server.HTTPDeps), "*"),
+		server.NewHTTPServer,
+		server.NewGRPCServer,
 		NewApp,
 	)
 	return nil, nil

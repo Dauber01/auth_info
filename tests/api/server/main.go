@@ -20,15 +20,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"auth_info/internal/apperr"
 	bizauth "auth_info/internal/biz/auth"
+	bizdict "auth_info/internal/biz/dict"
+	bizdoc "auth_info/internal/biz/document"
 	bizhello "auth_info/internal/biz/hello"
 	"auth_info/internal/config"
 	authhandler "auth_info/internal/handler/auth"
+	dicthandler "auth_info/internal/handler/dict"
+	dochandler "auth_info/internal/handler/document"
 	hellohandler "auth_info/internal/handler/hello"
-	"auth_info/internal/middleware"
-	authrouter "auth_info/internal/router/auth"
-	hellorouter "auth_info/internal/router/hello"
+	"auth_info/internal/mcpserver"
+	"auth_info/internal/pkg/apperr"
+	appserver "auth_info/internal/server"
 )
 
 type memoryUsers struct {
@@ -75,7 +78,7 @@ func run() error {
 	logger := zap.NewNop()
 	cfg := &config.Config{JWT: config.JWTConfig{Secret: hex.EncodeToString(key), Expire: 1}}
 	users := &memoryUsers{users: make(map[string]bizauth.User)}
-	auth := bizauth.NewUseCase(users, cfg, logger)
+	auth := bizauth.NewUseCase(users, bizauth.Options{Secret: cfg.JWT.Secret, Expire: time.Hour}, logger)
 	enforcer, err := casbin.NewEnforcer("config/rbac_model.conf")
 	if err != nil {
 		return fmt.Errorf("load policy model: %w", err)
@@ -83,13 +86,17 @@ func run() error {
 	if _, err := enforcer.AddPolicy("user", "/api/v1/hello", "GET"); err != nil {
 		return fmt.Errorf("add fixture policy: %w", err)
 	}
-	engine := gin.New()
-	engine.Use(middleware.ErrorHandler(logger))
-	api := engine.Group("/api/v1")
-	authrouter.Register(api, authhandler.NewHandler(auth))
-	protected := api.Group("")
-	protected.Use(middleware.JWTAuth(auth), middleware.CasbinAuth(enforcer))
-	hellorouter.Register(protected, hellohandler.NewHandler(bizhello.NewUseCase(logger)))
+	cfg.Server = config.ServerConfig{Mode: gin.TestMode, RequestTimeout: time.Second, DocumentTimeout: time.Second}
+	hello := bizhello.NewUseCase(logger)
+	httpServer, err := appserver.NewHTTPServer(cfg, logger, appserver.HTTPDeps{
+		AuthUC: auth, Enforcer: enforcer, AuthHandler: authhandler.NewHandler(auth),
+		HelloHandler: hellohandler.NewHandler(hello), HelloMCPHandler: mcpserver.NewHelloMCPHandler(hello),
+		DictHandler:     dicthandler.NewHandler(bizdict.NewUseCase(nil, logger)),
+		DocumentHandler: dochandler.NewHandler(bizdoc.NewUseCase(nil)),
+	})
+	if err != nil {
+		return err
+	}
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -99,7 +106,8 @@ func run() error {
 		// Serve also closes this listener; repeated cleanup is expected.
 		_ = listener.Close()
 	}()
-	server := &http.Server{Handler: engine, ReadHeaderTimeout: 5 * time.Second}
+	server := httpServer
+	server.ReadHeaderTimeout = 5 * time.Second
 	errorsCh := make(chan error, 1)
 	go func() { errorsCh <- server.Serve(listener) }()
 	defer func() {

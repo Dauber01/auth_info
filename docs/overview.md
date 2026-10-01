@@ -20,7 +20,8 @@
 .
 ├── cmd/main/                    # 应用入口
 ├── internal/                    # 应用内部代码
-│   ├── app/                     # 应用装配（服务启动、依赖注入、路由组装入口）
+│   ├── app/                     # 应用运行、依赖注入与资源生命周期
+│   ├── server/                  # HTTP/gRPC 构建、中间件与路由挂载
 │   ├── router/                  # HTTP 路由注册（请求路径按模块拆分）
 │   ├── handler/                 # REST API 处理器（请求绑定/转换/响应）
 │   ├── validation/              # Proto 参数校验（Protovalidate 封装与错误映射）
@@ -29,7 +30,7 @@
 │   ├── data/                    # 持久化层（模型 + 仓储 + DB）
 │   ├── middleware/              # 中间件（JWT/Casbin/统一错误处理）
 │   ├── config/                  # 配置管理
-│   └── logger/                  # 日志组件
+│   └── pkg/                     # logger、trace、apperr 公共能力
 ├── api/                         # API 定义
 │   ├── proto/                   # Proto 契约与依赖（统一目录）
 │   │   ├── *.proto              # 业务契约（common/auth/dict/document/hello）
@@ -55,10 +56,10 @@
 ### 快速开始
 
 ```bash
-# 一键启动（自动生成代码并运行）
+# 构建并启动（使用已生成代码）
 make run
 
-# 开发模式（不清理已生成的代码）
+# 开发模式（显式生成并运行）
 make dev
 ```
 
@@ -68,7 +69,7 @@ make dev
 # 显示帮助
 make help
 
-# 安装必需工具（protoc, protoc-gen-go, protoc-gen-go-grpc）
+# 安装固定版本 Go 生成插件（protoc 需预装）
 make install-tools
 
 # 生成 Proto 代码
@@ -83,13 +84,13 @@ make mod-tidy
 # 编译项目
 make build
 
-# 运行项目（生成代码 + 编译 + 启动）
+# 运行项目（仅编译 + 启动）
 make run
 
-# 开发模式运行（不清理旧代码）
+# 开发模式运行（显式生成后启动）
 make dev
 
-# 清理生成的文件
+# 清理构建产物，保留生成源码
 make clean
 
 # 运行测试
@@ -101,7 +102,7 @@ make fmt
 # 代码检查
 make lint
 
-# 执行所有操作（clean, proto, wire, build）
+# 编译与测试
 make all
 ```
 
@@ -144,7 +145,7 @@ log:
 
 **自动端口分配：**
 - REST API HTTP 服务：`http://localhost:8080`
-- gRPC 服务：`localhost:9080`（端口 = HTTP 端口 + 1000）
+- gRPC 服务：`localhost:9080`（默认 HTTP 端口 + 1000，可用 server.grpc_port 覆盖）
 
 ## API 访问
 
@@ -157,7 +158,7 @@ curl -H "Authorization: Bearer ${TEST_JWT}" http://localhost:8080/api/v1/hello
 
 ### gRPC 服务
 
-当前注册的服务为 `api.HelloService`，契约位于 `api/proto/hello.proto`。
+当前注册的服务为 `hello.HelloService`，契约位于 `api/proto/hello.proto`。
 使用具备该契约的 gRPC 客户端调用；当前服务没有注册 reflection，不能依赖服务反射自动列举接口。
 
 ## 添加新的 Proto 定义
@@ -203,7 +204,7 @@ make proto
 ### 4. 注册服务与路由
 
 - 在 `internal/service/` 实现 gRPC 接口，并在 `internal/service/service.go` 的注册聚合函数中注册服务。
-- 如果需要暴露 HTTP 接口，在 `internal/router/` 中新增路由注册函数，并在 `NewApp` 中挂载。
+- 如果需要暴露 HTTP 接口，在 `internal/router/` 中新增路由注册函数，并在 `internal/server/http.go` 中挂载。
 
 ## 项目配置
 
@@ -239,8 +240,8 @@ vim internal/service/hello/service.go
 # 4. 注册 HTTP 路由
 vim internal/router/hello/router.go
 
-# 5. 按需调整应用装配（服务/路由挂载）
-vim internal/app/app.go
+# 5. 按需调整协议装配
+vim internal/server/http.go
 
 # 6. 生成 Wire 依赖
 make wire
@@ -264,8 +265,10 @@ Wire 自动生成依赖注入代码。每当修改依赖关系时：
 make wire
 ```
 
-Wire 会自动分析 `internal/app/wire.go` 中的 `InitializeApp` 函数，并生成 `wire_gen.go`。
+Wire 会自动分析 `internal/app/wire.go` 中的 `initializeApp` 函数（外层 InitializeApp 负责失败回收），并生成 `wire_gen.go`。
 
 ## 许可证
 
 MIT
+
+2026-10-01：多环境/includes/APP 配置、生命周期、TraceID、事务和文档资源的完整说明见 [架构](architecture.md)。日志仅本地输出，不接 ES。

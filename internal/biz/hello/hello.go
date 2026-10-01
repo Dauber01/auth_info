@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"go.uber.org/zap"
+
+	"auth_info/internal/pkg/logger"
 )
 
 // UseCase hello 业务逻辑
@@ -18,11 +20,10 @@ func NewUseCase(logger *zap.Logger) *UseCase {
 
 // SayHello 处理 hello world 核心业务，name 为空时默认 "World"
 func (uc *UseCase) SayHello(ctx context.Context, name string) string {
-	_ = ctx
 	if name == "" {
 		name = "World"
 	}
 	msg := "Hello, " + name + "!"
-	uc.logger.Info("SayHello", zap.String("name", name), zap.String("msg", msg))
+	logger.WithContext(uc.logger, ctx).Info("SayHello", zap.String("name", name), zap.String("msg", msg))
 	return msg
 }

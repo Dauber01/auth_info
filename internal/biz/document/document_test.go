@@ -5,13 +5,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"os"
 	"strings"
 	"testing"
 )
 
 func TestGeneratePDF_WithImage(t *testing.T) {
-	uc := NewUseCase()
+	uc := NewUseCase(testResources(t))
 
 	// 1x1 透明 PNG 图片
 	pngBytes := []byte{
@@ -67,8 +66,8 @@ func TestGenerateWord_WithTextAndImage(t *testing.T) {
 	}
 	signature := "data:image/png;base64," + base64.StdEncoding.EncodeToString(pngBytes)
 
-	// word_template_test.docx 已常驻于 templates/ 目录，直接使用
-	uc := NewUseCase()
+	// Use a fresh in-memory DOCX template for every test.
+	uc := NewUseCase(testResources(t))
 	wordBytes, err := uc.GenerateWord(context.Background(), "word_template_test", WordTemplateData{
 		Texts: map[string]RichText{
 			"Name": {Runs: []RichRun{{Text: "张三"}}},
@@ -117,10 +116,6 @@ func TestGenerateWord_WithTextAndImage(t *testing.T) {
 		t.Error("document.xml 中未找到图片节点 w:drawing")
 	}
 
-	// 所有验证通过，将结果保存到 templates/test.docx 供人工检查
-	if err := os.WriteFile("../../../templates/test.docx", wordBytes, 0644); err != nil {
-		t.Errorf("保存 test.docx 失败: %v", err)
-	}
 }
 
 func TestGenerateWord_RichTextAndImageOptions(t *testing.T) {
@@ -138,7 +133,7 @@ func TestGenerateWord_RichTextAndImageOptions(t *testing.T) {
 	}
 	signature := "data:image/png;base64," + base64.StdEncoding.EncodeToString(pngBytes)
 
-	uc := NewUseCase()
+	uc := NewUseCase(testResources(t))
 	// 使用模板里实际存在的 key: {Name} 和 {Signature}
 	data := WordTemplateData{
 		Texts: map[string]RichText{
@@ -213,10 +208,6 @@ func TestGenerateWord_RichTextAndImageOptions(t *testing.T) {
 		t.Error("document.xml 中未找到图片节点 w:drawing")
 	}
 
-	// 保存结果供人工检查
-	if err := os.WriteFile("../../../templates/test_rich.docx", wordBytes, 0644); err != nil {
-		t.Errorf("保存 test_rich.docx 失败: %v", err)
-	}
 }
 
 // readZipFile 从 zip.Reader 中读取指定文件内容为字符串

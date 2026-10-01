@@ -6,8 +6,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"auth_info/internal/apperr"
-	"auth_info/internal/config"
+	"time"
+
+	"auth_info/internal/pkg/apperr"
 )
 
 // stubUserRepo 是 UserRepository 的最小 stub，用于 biz 层单元测试
@@ -25,9 +26,7 @@ func (s *stubUserRepo) Create(_ context.Context, _ *User) error {
 }
 
 func newTestUseCase(repo UserRepository) *UseCase {
-	return NewUseCase(repo, &config.Config{
-		JWT: config.JWTConfig{Secret: "test-secret", Expire: 1},
-	}, zap.NewNop())
+	return NewUseCase(repo, Options{Secret: "test-secret", Expire: time.Hour}, zap.NewNop())
 }
 
 func TestRegister_Conflict(t *testing.T) {

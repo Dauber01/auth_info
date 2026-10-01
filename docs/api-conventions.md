@@ -35,6 +35,8 @@ HTTP and gRPC conventions instead of introducing a second response envelope.
 - 403: 无权限
 - 404: 资源不存在
 - 409: 资源冲突，例如重复的字典编码或用户名
+- 408: 请求 context 已取消
+- 504: 请求期限已到
 - 500: 服务器内部错误
 
 ## Authentication
@@ -58,3 +60,6 @@ HTTP and gRPC conventions instead of introducing a second response envelope.
 
 - API version in URL path: `/api/v1/users`
 - Breaking changes require new version
+
+HTTP X-Trace-ID 与 gRPC x-trace-id metadata 用于关联日志；不在业务响应体增加字段。
+重构保留所有 Proto 规则；Hello name 没有长度限制，不套用其他项目的 Gin binding 规则。

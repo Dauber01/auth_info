@@ -17,6 +17,7 @@ class Response:
     status: int
     content_type: str
     body: bytes
+    headers: dict
 
     def json(self):
         return json.loads(self.body)
@@ -31,10 +32,10 @@ class APIClient:
         self.base_url = base_url.rstrip("/")
         self.opener = build_opener(ProxyHandler({}), NoRedirects())
 
-    def request(self, method, path, body=None, token=None):
+    def request(self, method, path, body=None, token=None, extra_headers=None):
         if not path.startswith("/") or path.startswith("//"):
             raise ValueError("API request path must be service-relative")
-        headers = {"Accept": "application/json"}
+        headers = {"Accept": "application/json", **(extra_headers or {})}
         if body is not None:
             headers["Content-Type"] = "application/json"
         if token is not None:
@@ -46,4 +47,5 @@ class APIClient:
         except HTTPError as error:
             response = error
         with response:
-            return Response(response.code, response.headers.get("Content-Type", ""), response.read())
+            return Response(response.code, response.headers.get("Content-Type", ""), response.read(),
+                            dict(response.headers.items()))

@@ -1,0 +1,28 @@
+server:
+  port: 8080
+  mode: release
+  read_header_timeout: 5s
+  read_timeout: 15s
+  write_timeout: 35s
+  idle_timeout: 120s
+  request_timeout: 30s
+  document_timeout: 2m
+  grpc_timeout: 30s
+  shutdown_timeout: 5s
+log:
+  level: info
+  format: json
+  access: true
+  file:
+    enabled: false
+    path: logs/app.log
+    max_size_mb: 100
+    max_backups: 10
+    max_age_days: 30
+    compress: true
+casbin:
+  model: config/rbac_model.conf
+document:
+  template_dir: templates
+  font_path: ""
+  image_timeout: 30s

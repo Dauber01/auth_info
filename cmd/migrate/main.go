@@ -1,43 +1,41 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"log"
+	"os"
 
 	"auth_info/internal/config"
 	"auth_info/internal/data"
 	dataauth "auth_info/internal/data/auth"
 	datadict "auth_info/internal/data/dict"
-	"auth_info/internal/logger"
+	"auth_info/internal/pkg/logger"
 )
 
-func main() {
-	configPath := flag.String("config", "./config", "配置文件路径")
-	flag.Parse()
-
-	cfg, err := config.LoadConfig(*configPath)
+func run(path string) (err error) {
+	cfg, err := config.LoadConfig(path)
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		return err
 	}
-
-	if err := logger.InitLogger(cfg.Log.Level); err != nil {
-		log.Fatalf("Failed to init logger: %v", err)
+	logg, closeLog, err := logger.New(cfg.Log)
+	if err != nil {
+		return err
 	}
-
-	logg := logger.GetLogger()
+	defer func() { err = errors.Join(err, closeLog()) }()
 	db, err := data.NewDB(cfg, logg)
 	if err != nil {
-		log.Fatalf("Failed to connect mysql: %v", err)
+		return err
 	}
+	defer func() { err = errors.Join(err, data.CloseDB(db)) }()
+	return data.RunMigrations(db, &dataauth.User{}, &datadict.DictType{}, &datadict.DictItem{})
+}
 
-	// 新增模块时在此处追加对应持久化模型即可。
-	if err := data.RunMigrations(db,
-		&dataauth.User{},
-		&datadict.DictType{},
-		&datadict.DictItem{},
-	); err != nil {
-		log.Fatalf("Migration failed: %v", err)
+func main() {
+	path := flag.String("config", "./config", "配置文件或包含 config.yaml 的目录")
+	flag.Parse()
+	if err := run(*path); err != nil {
+		log.Print(err)
+		os.Exit(1)
 	}
-
-	log.Println("Migrations completed successfully")
 }

@@ -10,7 +10,8 @@ import (
 )
 
 // injectImagesToDocx 向 docx 模板字节流中注入图片，直接替换 {key} 占位符。
-func (uc *UseCase) injectImagesToDocx(ctx context.Context, docxBytes []byte, imageData map[string]ImageValue) ([]byte, error) {
+func (uc *UseCase) injectImagesToDocx(ctx context.Context, docxBytes []byte,
+	imageData map[string]ImageValue) ([]byte, error) {
 	zr, err := zip.NewReader(bytes.NewReader(docxBytes), int64(len(docxBytes)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read docx zip: %w", err)
@@ -18,6 +19,9 @@ func (uc *UseCase) injectImagesToDocx(ctx context.Context, docxBytes []byte, ima
 
 	files := make(map[string][]byte, len(zr.File))
 	for _, f := range zr.File {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		rc, err := f.Open()
 		if err != nil {
 			return nil, fmt.Errorf("failed to open zip entry %s: %w", f.Name, err)
@@ -33,6 +37,9 @@ func (uc *UseCase) injectImagesToDocx(ctx context.Context, docxBytes []byte, ima
 	docXML := string(files["word/document.xml"])
 
 	for _, p := range indexedImagePairs(imageData) {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		imgBytes, err := uc.fetchImageBytes(ctx, p.val)
 		if err != nil {
 			return nil, fmt.Errorf("image key %q: %w", p.key, err)

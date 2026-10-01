@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	apipb "auth_info/api/gen/api/proto"
-	"auth_info/internal/apperr"
+	"auth_info/internal/pkg/apperr"
 	"auth_info/internal/validation"
 )
 

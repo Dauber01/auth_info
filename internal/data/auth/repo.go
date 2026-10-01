@@ -6,6 +6,8 @@ import (
 
 	"gorm.io/gorm"
 
+	"auth_info/internal/data/shared"
+
 	bizauth "auth_info/internal/biz/auth"
 )
 
@@ -21,7 +23,7 @@ func NewUserRepository(db *gorm.DB) *UserRepo {
 
 func (r *UserRepo) GetByUsername(ctx context.Context, username string) (*bizauth.User, error) {
 	var user User
-	if err := r.db.WithContext(ctx).Where("username = ?", username).First(&user).Error; err != nil {
+	if err := shared.DB(ctx, r.db).Where("username = ?", username).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -32,7 +34,7 @@ func (r *UserRepo) GetByUsername(ctx context.Context, username string) (*bizauth
 
 func (r *UserRepo) Create(ctx context.Context, user *bizauth.User) error {
 	model := fromBiz(user)
-	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
+	if err := shared.DB(ctx, r.db).Create(model).Error; err != nil {
 		return err
 	}
 	// 回写自增字段到调用方持有的 DTO

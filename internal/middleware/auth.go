@@ -6,8 +6,8 @@ import (
 	"github.com/casbin/casbin/v3"
 	"github.com/gin-gonic/gin"
 
-	"auth_info/internal/apperr"
 	bizauth "auth_info/internal/biz/auth"
+	"auth_info/internal/pkg/apperr"
 )
 
 const claimsKey = "claims"

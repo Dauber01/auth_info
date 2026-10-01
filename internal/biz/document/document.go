@@ -5,35 +5,22 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"os"
 	"strings"
 	"text/template"
 
 	"github.com/go-pdf/fpdf"
 
-	"auth_info/internal/apperr"
+	"auth_info/internal/pkg/apperr"
 )
 
 // UseCase 处理 PDF 文档生成，无需数据库依赖
-type UseCase struct {
-	templateDir string
-	fontPath    string
-	httpClient  *http.Client
-}
+type UseCase struct{ resources Resources }
 
 const maxImageBytes = 10 * 1024 * 1024
 
-func NewUseCase() *UseCase {
-	return &UseCase{
-		templateDir: "D:\\GoProject\\auth_info\\templates",
-		fontPath:    "D:\\GoProject\\auth_info\\assets\\fonts\\NotoSansSC-Regular.ttf",
-		httpClient:  &http.Client{Timeout: 30 * 1000000000}, // 30秒超时
-	}
-}
+// NewUseCase receives all external resources; it has no deployment-specific paths.
+func NewUseCase(resources Resources) *UseCase { return &UseCase{resources: resources} }
 
 // --- 模板结构体 ---
 
@@ -56,16 +43,12 @@ type templateSection struct {
 
 // GeneratePDF 根据模板名称和数据生成 PDF，返回字节流
 func (uc *UseCase) GeneratePDF(ctx context.Context, templateName string, data map[string]any) ([]byte, error) {
-	_ = ctx
-
-	// 1. 读取模板文件
-	tmplPath := fmt.Sprintf("%s/%s.json", uc.templateDir, templateName)
-	tmplRaw, err := os.ReadFile(tmplPath)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	tmplRaw, err := uc.resources.ReadTemplate(ctx, templateName, ".json")
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil, apperr.New(apperr.CodeNotFound, fmt.Sprintf("template not found: %s", templateName))
-		}
-		return nil, apperr.Wrap(apperr.CodeInternal, "failed to read template", err)
+		return nil, err
 	}
 
 	// 2. 用 text/template 渲染 JSON（填充占位符）
@@ -81,7 +64,7 @@ func (uc *UseCase) GeneratePDF(ctx context.Context, templateName string, data ma
 	}
 
 	// 4. 生成 PDF
-	pdfBytes, err := uc.buildPDF(&doc)
+	pdfBytes, err := uc.buildPDF(ctx, &doc)
 	if err != nil {
 		return nil, apperr.Wrap(apperr.CodeInternal, "failed to build PDF", err)
 	}
@@ -102,12 +85,16 @@ func renderTemplate(tmplStr string, data map[string]any) (string, error) {
 }
 
 // buildPDF 使用 fpdf 将解析后的模板绘制成 PDF
-func (uc *UseCase) buildPDF(doc *documentTemplate) ([]byte, error) {
+func (uc *UseCase) buildPDF(ctx context.Context, doc *documentTemplate) ([]byte, error) {
 	pdf := fpdf.New("P", "mm", "A4", "")
 
 	// 加载中文字体（如果存在）
 	fontFamily := "Helvetica"
-	if fontBytes, err := os.ReadFile(uc.fontPath); err == nil {
+	fontBytes, err := uc.resources.ReadFont(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(fontBytes) > 0 {
 		pdf.AddUTF8FontFromBytes("NotoSansSC", "", fontBytes)
 		pdf.AddUTF8FontFromBytes("NotoSansSC", "B", fontBytes)
 		fontFamily = "NotoSansSC"
@@ -129,13 +116,16 @@ func (uc *UseCase) buildPDF(doc *documentTemplate) ([]byte, error) {
 
 	// 逐 section 绘制
 	for _, sec := range doc.Sections {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		switch sec.Type {
 		case "paragraph":
 			if err := uc.drawParagraph(pdf, &sec, fontFamily, contentWidth); err != nil {
 				return nil, err
 			}
 		case "table":
-			if err := uc.drawTable(pdf, &sec, fontFamily, contentWidth); err != nil {
+			if err := uc.drawTable(ctx, pdf, &sec, fontFamily, contentWidth); err != nil {
 				return nil, err
 			}
 		case "image":
@@ -149,6 +139,9 @@ func (uc *UseCase) buildPDF(doc *documentTemplate) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := pdf.Output(&buf); err != nil {
 		return nil, fmt.Errorf("failed to output PDF: %w", err)
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 	return buf.Bytes(), nil
 }
@@ -169,7 +162,8 @@ func (uc *UseCase) drawParagraph(pdf *fpdf.Fpdf, sec *templateSection, fontFamil
 	return nil
 }
 
-func (uc *UseCase) drawTable(pdf *fpdf.Fpdf, sec *templateSection, fontFamily string, contentWidth float64) error {
+func (uc *UseCase) drawTable(ctx context.Context, pdf *fpdf.Fpdf, sec *templateSection,
+	fontFamily string, contentWidth float64) error {
 	if len(sec.Headers) == 0 {
 		return nil
 	}
@@ -190,6 +184,9 @@ func (uc *UseCase) drawTable(pdf *fpdf.Fpdf, sec *templateSection, fontFamily st
 	pdf.SetFont(fontFamily, "", 11)
 	pdf.SetFillColor(255, 255, 255)
 	for i, row := range sec.Rows {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if i%2 == 0 {
 			pdf.SetFillColor(248, 248, 248)
 		} else {
@@ -251,14 +248,12 @@ func (uc *UseCase) drawImage(pdf *fpdf.Fpdf, sec *templateSection) error {
 // data.Images 支持原始尺寸和最大尺寸限制
 // 模板占位符格式：{key}
 func (uc *UseCase) GenerateWord(ctx context.Context, templateName string, data WordTemplateData) ([]byte, error) {
-	tmplPath := fmt.Sprintf("%s/%s.docx", uc.templateDir, templateName)
-
-	docBytes, err := os.ReadFile(tmplPath)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	docBytes, err := uc.resources.ReadTemplate(ctx, templateName, ".docx")
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil, apperr.New(apperr.CodeNotFound, fmt.Sprintf("template not found: %s", templateName))
-		}
-		return nil, apperr.Wrap(apperr.CodeInternal, "failed to read template", err)
+		return nil, err
 	}
 
 	result := docBytes
@@ -279,6 +274,9 @@ func (uc *UseCase) GenerateWord(ctx context.Context, templateName string, data W
 		}
 	}
 
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	return result, nil
 }
 
@@ -292,37 +290,11 @@ func (uc *UseCase) fetchImageBytes(ctx context.Context, imgVal ImageValue) ([]by
 		return nil, apperr.New(apperr.CodeInvalidArgument, "image_url is empty")
 	}
 
-	if ctx == nil {
-		ctx = context.Background()
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
-
-	// 判断是 URL 还是 base64
 	if strings.HasPrefix(src, "http://") || strings.HasPrefix(src, "https://") {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, src, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build image request: %w", err)
-		}
-		resp, err := uc.httpClient.Do(req)
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch image from URL: %w", err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("failed to fetch image: HTTP %d", resp.StatusCode)
-		}
-		if resp.ContentLength > maxImageBytes {
-			return nil, apperr.New(apperr.CodeInvalidArgument, "image size exceeds 10MB limit")
-		}
-
-		imgBytes, err := io.ReadAll(io.LimitReader(resp.Body, maxImageBytes+1))
-		if err != nil {
-			return nil, fmt.Errorf("failed to read image response: %w", err)
-		}
-		if int64(len(imgBytes)) > maxImageBytes {
-			return nil, apperr.New(apperr.CodeInvalidArgument, "image size exceeds 10MB limit")
-		}
-		return imgBytes, nil
+		return uc.resources.FetchImage(ctx, src, maxImageBytes)
 	}
 
 	// Base64 解码（兼容旧格式）

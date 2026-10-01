@@ -9,8 +9,9 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 
-	"auth_info/internal/apperr"
-	"auth_info/internal/config"
+	"auth_info/internal/pkg/logger"
+
+	"auth_info/internal/pkg/apperr"
 )
 
 // Claims JWT 自定义声明
@@ -21,16 +22,22 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+// Options contains only the signing inputs needed by the auth use case.
+type Options struct {
+	Secret string
+	Expire time.Duration
+}
+
 // UseCase 鉴权业务逻辑
 type UseCase struct {
-	users  UserRepository
-	cfg    *config.Config
-	logger *zap.Logger
+	users   UserRepository
+	options Options
+	logger  *zap.Logger
 }
 
 // NewUseCase Wire Provider
-func NewUseCase(users UserRepository, cfg *config.Config, logger *zap.Logger) *UseCase {
-	return &UseCase{users: users, cfg: cfg, logger: logger}
+func NewUseCase(users UserRepository, options Options, logger *zap.Logger) *UseCase {
+	return &UseCase{users: users, options: options, logger: logger}
 }
 
 // Register 注册新用户（bcrypt 加密密码）
@@ -57,7 +64,7 @@ func (uc *UseCase) Register(ctx context.Context, username, password string) erro
 		return apperr.Wrap(apperr.CodeInternal, "failed to create user", err)
 	}
 
-	uc.logger.Info("user registered", zap.String("username", username))
+	logger.WithContext(uc.logger, ctx).Info("user registered", zap.String("username", username))
 	return nil
 }
 
@@ -80,7 +87,7 @@ func (uc *UseCase) Login(ctx context.Context, username, password string) (string
 		return "", apperr.Wrap(apperr.CodeInternal, "failed to generate token", err)
 	}
 
-	uc.logger.Info("user logged in", zap.String("username", username))
+	logger.WithContext(uc.logger, ctx).Info("user logged in", zap.String("username", username))
 	return token, nil
 }
 
@@ -91,7 +98,7 @@ func (uc *UseCase) ParseToken(tokenStr string) (*Claims, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
-		return []byte(uc.cfg.JWT.Secret), nil
+		return []byte(uc.options.Secret), nil
 	})
 	if err != nil || !token.Valid {
 		return nil, apperr.New(apperr.CodeUnauthenticated, "invalid token")
@@ -100,7 +107,7 @@ func (uc *UseCase) ParseToken(tokenStr string) (*Claims, error) {
 }
 
 func (uc *UseCase) generateToken(user *User) (string, error) {
-	expire := time.Duration(uc.cfg.JWT.Expire) * time.Hour
+	expire := uc.options.Expire
 	claims := Claims{
 		UserID:   user.ID,
 		Username: user.Username,
@@ -111,5 +118,5 @@ func (uc *UseCase) generateToken(user *User) (string, error) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(uc.cfg.JWT.Secret))
+	return token.SignedString([]byte(uc.options.Secret))
 }

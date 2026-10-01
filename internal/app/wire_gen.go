@@ -19,49 +19,58 @@ import (
 	dict3 "auth_info/internal/handler/dict"
 	document2 "auth_info/internal/handler/document"
 	hello2 "auth_info/internal/handler/hello"
-	"auth_info/internal/logger"
 	"auth_info/internal/mcpserver"
+	"auth_info/internal/server"
 	hello3 "auth_info/internal/service/hello"
 )
 
 // Injectors from wire.go:
 
-func InitializeApp(cfg *config.Config) (*App, error) {
-	zapLogger, err := logger.NewLogger(cfg)
+func initializeApp(cfg *config.Config, resources *Lifecycle) (*App, error) {
+	logger, err := ProvideLogger(cfg, resources)
 	if err != nil {
 		return nil, err
 	}
-	db, err := data.NewDB(cfg, zapLogger)
+	db, err := ProvideDB(cfg, logger, resources)
 	if err != nil {
 		return nil, err
 	}
 	userRepo := auth.NewUserRepository(db)
-	useCase := auth2.NewUseCase(userRepo, cfg, zapLogger)
-	enforcer, err := data.NewEnforcer(db, cfg, zapLogger)
+	options := ProvideAuthOptions(cfg)
+	useCase := auth2.NewUseCase(userRepo, options, logger)
+	enforcer, err := data.NewEnforcer(db, cfg, logger)
 	if err != nil {
 		return nil, err
 	}
-	helloUseCase := hello.NewUseCase(zapLogger)
+	helloUseCase := hello.NewUseCase(logger)
 	handler := hello2.NewHandler(helloUseCase)
 	authHandler := auth3.NewHandler(useCase)
 	httpHandler := mcpserver.NewHelloMCPHandler(helloUseCase)
-	service := hello3.NewService(helloUseCase)
 	dictRepo := dict.NewDictRepository(db)
-	dictUseCase := dict2.NewUseCase(dictRepo, zapLogger)
+	dictUseCase := dict2.NewUseCase(dictRepo, logger)
 	dictHandler := dict3.NewHandler(dictUseCase)
-	documentUseCase := document.NewUseCase()
+	documentResources, err := ProvideDocumentResources(cfg, resources)
+	if err != nil {
+		return nil, err
+	}
+	documentUseCase := document.NewUseCase(documentResources)
 	documentHandler := document2.NewHandler(documentUseCase)
-	appDeps := AppDeps{
+	httpDeps := server.HTTPDeps{
 		AuthUC:          useCase,
 		Enforcer:        enforcer,
 		HelloHandler:    handler,
 		AuthHandler:     authHandler,
 		HelloMCPHandler: httpHandler,
-		HelloSvc:        service,
 		DictHandler:     dictHandler,
 		DocumentHandler: documentHandler,
 	}
-	app, err := NewApp(cfg, zapLogger, appDeps)
+	httpServer, err := server.NewHTTPServer(cfg, logger, httpDeps)
+	if err != nil {
+		return nil, err
+	}
+	service := hello3.NewService(helloUseCase)
+	grpc := server.NewGRPCServer(cfg, logger, service)
+	app, err := NewApp(cfg, logger, httpServer, grpc, resources)
 	if err != nil {
 		return nil, err
 	}

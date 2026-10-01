@@ -4,7 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"auth_info/internal/apperr"
+	"auth_info/internal/pkg/apperr"
+	"auth_info/internal/pkg/logger"
 )
 
 type ErrorResponse struct {
@@ -22,7 +23,7 @@ func ErrorHandler(log *zap.Logger) gin.HandlerFunc {
 		}
 
 		err := c.Errors.Last().Err
-		log.Error(
+		logger.WithContext(log, c.Request.Context()).Error(
 			"request failed",
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.FullPath()),

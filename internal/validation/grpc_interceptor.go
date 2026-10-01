@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	"auth_info/internal/apperr"
+	"auth_info/internal/pkg/apperr"
 )
 
 func UnaryServerInterceptor() grpc.UnaryServerInterceptor {

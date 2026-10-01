@@ -64,3 +64,15 @@ class AuthAPITest(unittest.TestCase):
 
     def test_protected_route_rejects_invalid_token(self):
         self.assert_reply(self.client.request("GET", "/api/v1/hello", token="invalid-fixture-token"), 401)
+
+    def test_trace_header_preserves_error_contract(self):
+        response = self.client.request("GET", "/api/v1/hello", extra_headers={"X-Trace-ID": "api-trace-42"})
+        self.assert_reply(response, 401)
+        self.assertEqual({k.lower(): v for k, v in response.headers.items()}["x-trace-id"], "api-trace-42")
+
+    def test_authenticated_user_without_policy_is_forbidden(self):
+        self.assert_reply(self.register("api_no_policy"), 200)
+        response = self.client.request("POST", "/api/v1/auth/login",
+                                       {"username": "api_no_policy", "password": "fixture-password"})
+        token = self.assert_reply(response, 200)["data"]["token"]
+        self.assert_reply(self.client.request("GET", "/api/v1/dict/types", token=token), 403)

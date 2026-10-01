@@ -11,8 +11,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
+	"time"
+
 	bizauth "auth_info/internal/biz/auth"
-	"auth_info/internal/config"
 	"auth_info/internal/middleware"
 )
 
@@ -27,7 +28,7 @@ func (s *authRepoStub) GetByUsername(_ context.Context, _ string) (*bizauth.User
 func (s *authRepoStub) Create(_ context.Context, _ *bizauth.User) error { return s.err }
 
 func newHandlerForTest(repo bizauth.UserRepository) *Handler {
-	uc := bizauth.NewUseCase(repo, &config.Config{JWT: config.JWTConfig{Secret: "test", Expire: 1}}, zap.NewNop())
+	uc := bizauth.NewUseCase(repo, bizauth.Options{Secret: "test", Expire: time.Hour}, zap.NewNop())
 	return NewHandler(uc)
 }
 

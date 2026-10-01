@@ -1,6 +1,7 @@
 package apperr
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -16,6 +17,8 @@ const (
 	CodeNotFound         Code = "NOT_FOUND"
 	CodeConflict         Code = "CONFLICT"
 	CodeInternal         Code = "INTERNAL"
+	CodeTimeout          Code = "TIMEOUT"
+	CodeCanceled         Code = "CANCELED"
 )
 
 type Error struct {
@@ -61,6 +64,12 @@ func GetCode(err error) Code {
 	if err == nil {
 		return CodeInternal
 	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return CodeTimeout
+	}
+	if errors.Is(err, context.Canceled) {
+		return CodeCanceled
+	}
 	var appErr *Error
 	if errors.As(err, &appErr) && appErr.code != "" {
 		return appErr.code
@@ -81,6 +90,10 @@ func Message(err error) string {
 
 func HTTPStatus(err error) int {
 	switch GetCode(err) {
+	case CodeTimeout:
+		return http.StatusGatewayTimeout
+	case CodeCanceled:
+		return http.StatusRequestTimeout
 	case CodeInvalidArgument:
 		return http.StatusBadRequest
 	case CodeUnauthenticated:
@@ -98,6 +111,10 @@ func HTTPStatus(err error) int {
 
 func GRPCStatusCode(err error) codes.Code {
 	switch GetCode(err) {
+	case CodeTimeout:
+		return codes.DeadlineExceeded
+	case CodeCanceled:
+		return codes.Canceled
 	case CodeInvalidArgument:
 		return codes.InvalidArgument
 	case CodeUnauthenticated:
