@@ -29,3 +29,5 @@
 服务 drain 预算不能依赖同步 gRPC Stop 一定返回；忽略取消的 handler 已有复现与回归测试。
 事务取消使用临时 SQLite 文件验证回滚，避免取消连接被丢弃造成内存库消失的夹具干扰。
 Wire 生成可重复、纯 build 不更改生成文件和模块清单；最终验证完成。
+
+用户后续指定仅保留 test/line；test 原先通过 config.yaml 间接继承本地参数，已归入独立 test.yaml；共享 base 保持无部署凭据。目录入口和三个命令默认统一选 test，不再读取旧 config.yaml。详见 docs/configuration.md。

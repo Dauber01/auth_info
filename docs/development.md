@@ -166,24 +166,18 @@ logger.Error(
 
 ## 认证与授权
 
-- JWT：HS256 签名，Claims 含 `UserID/Username/Role`，有效期由 `config.yaml` 的 `jwt.expire` 控制
+- JWT：HS256 签名，Claims 含 `UserID/Username/Role`，有效期由所选环境配置的 `jwt.expire` 控制
 - RBAC：Casbin v3 + GORM 适配器，策略存储在数据库 `casbin_rule` 表；`make seed` 初始化默认策略（admin 全访问，user 访问 GET 路由）
 - HTTP 全局中间件：TraceID → AccessLog（可关）→ Recovery → ErrorHandler；保护组先 JWTAuth → CasbinAuth，再进入路由超时与 handler。
 
 ## 配置
 
-旧入口 `config/config.yaml` 继续支持。[LoadConfig](../internal/config/load.go) 使用独立 Viper，
-`-config` 可接收具体 YAML 或含 config.yaml 的目录；优先级为默认值、includes、入口文件、APP_* 环境变量。
-例如 `make run ENV=dev`、`make run CONFIG_FILE=./config/pre.yaml`。pre/line 不含凭据，需注入 APP_JWT_SECRET 和 APP_MYSQL_*。
-超时、日志、document 资源配置见 [基础配置](../config/includes/base.yaml)。
+环境入口只有 [test.yaml](../config/test.yaml) 与 [line.yaml](../config/line.yaml)，共享 [base.yaml](../config/includes/base.yaml)。
+默认使用 test；`make run ENV=line` 或 `./bin/auth_info -config ./config/line.yaml` 显式选择 line。
+`-config ./config` 目录形式读取 test.yaml。Make 的 ENV 仅接受 test/line，CONFIG_FILE 可覆盖具体路径。
+line 的 APP_MYSQL_* / APP_JWT_SECRET 部署配置、覆盖优先级及各字段职责见 [环境配置](configuration.md)。
+`make dev` 是代码生成后运行所选环境的命令，默认 test，不代表另有 dev 环境。
 本地滚动文件通过 log.file.enabled 开启，日志不上传 ES 或其他远端服务。
-Makefile 的构建产物为 `bin/auth_info`：
-
-```bash
-./bin/auth_info -config ./config
-```
-
-生产环境务必修改 `jwt.secret` 和数据库密码。
 
 ## 测试
 

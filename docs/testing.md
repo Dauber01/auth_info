@@ -42,7 +42,7 @@ API 测试通过不能代替页面点击与逐步断言。没有页面时标记�
 ## 架构回归（2026-10-01）
 
 App 测试覆盖初始化失败回收、第二端口失败回收、并发幂等停止与关闭超时；server 测试验证 HTTP 公开/保护路由、MCP deadline 例外和真实 gRPC 调用。
-config 测试覆盖 includes/APP 优先级和多次加载隔离。事务测试使用临时 SQLite，真实 auth/dict repo 验证提交、回滚及跨池/嵌套拒绝，不代表 MySQL 方言全部验证。
+config 测试覆盖 includes/APP 优先级、多次加载隔离、默认/目录 test 选择、显式 line 及实际环境文件可加载性。事务测试使用临时 SQLite，真实 auth/dict repo 验证提交、回滚及跨池/嵌套拒绝，不代表 MySQL 方言全部验证。
 文档测试使用内存 DOCX/JSON 与临时目录，保留文字/图片/富文本断言，不生成仓库内测试产物。
 
 ```sh

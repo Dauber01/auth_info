@@ -10,18 +10,21 @@ import (
 	"github.com/spf13/viper"
 )
 
-// LoadConfig accepts a file or the legacy directory containing config.yaml.
+// DefaultPath selects the test environment unless a deployment explicitly chooses another file.
+const DefaultPath = "./config/test.yaml"
+
+// LoadConfig accepts a file or a directory containing test.yaml.
 // Precedence: defaults < includes (in order) < entry file < APP_* variables.
 func LoadConfig(path string) (*Config, error) {
 	if path == "" {
-		path = "./config"
+		path = DefaultPath
 	}
 	info, err := os.Stat(path)
 	if err != nil {
 		return nil, fmt.Errorf("stat config: %w", err)
 	}
 	if info.IsDir() {
-		path = filepath.Join(path, "config.yaml")
+		path = filepath.Join(path, "test.yaml")
 	}
 	values, err := readConfig(path, make(map[string]bool))
 	if err != nil {

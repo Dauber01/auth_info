@@ -3,7 +3,7 @@
 verification_status: passed
 
 日期：2026-10-01。已完成用户授权的架构融合，排除 ES 与其他远端日志，不迁入参考项目业务代码。
-当前验收覆盖 AC-01～09；后附 2026-09-30 分析阶段记录仅作为历史证据。
+架构批次验收覆盖 AC-01～09；后附 2026-09-30 分析阶段记录仅作为历史证据。
 环境：macOS arm64 / Go 1.25.4 / Python 3；当前工作区未提交。
 
 ## 实施结果与测试生成
@@ -118,3 +118,17 @@ sync 更新 0 个生成文件；框架单元测试 24 项通过。额外 Python 
 - 首次宽泛 CodeGraph 和一次长文件读取输出被截断；用精确路径/符号补齐需要的证据，没有将工具的测试覆盖提示当作实际覆盖率。
 - 报告建议首先拆 server 并处理生命周期，再处理配置与请求追踪；事务和 pkg 归位按真实需求推进。
 - 未做代码迁移、依赖升级、数据库变更、提交或参考项目文件修改。后续实现复用此任务材料，细化实际批次验收并执行 generate-tests。
+
+## 配置收敛批次（2026-10-01）
+
+AC-10～12 已实现并验证，以上架构回归记录属于前一批次。本批次基线 a4e449b，当前修改未提交。
+
+- 删除 config/config.yaml、dev.yaml、pre.yaml；原 test 的有效配置归入 test.yaml，仍直接包含公共 base；line 不继承测试配置。
+- CLI/config loader 默认 test；目录形式读取 test.yaml。Make 默认 ENV=test，只允许 test/line，CONFIG_FILE/CONFIG_DIR 覆盖保留。
+- generate-tests 已执行：新增 TestLoadConfigDefaultAndDirectorySelectTest 与 TestRepositoryEnvironmentProfiles，映射 CFG-03/04；复用配置合并、隔离及校验用例。临时目录/环境自动恢复，不连接数据库。
+- CFG-05：25 项实际 Make 配置/命令 dry-run 断言通过，包含默认/test/line、自定义目录/文件、非法与空 ENV；run/migrate/seed 的路径均正确。
+- `go run -mod=readonly ./cmd/{main,migrate,seed} -h` 分别执行，均退出 0，帮助信息确认默认 ./config/test.yaml。只运行帮助，不启动或写库。
+- 使用本记录的离线 Go 环境执行 `make fmt`、`make test`、`make lint build`，均退出 0；15 个有测试的 Go 包通过。
+- harness sync/check、tasks check、24 项框架测试均退出 0；sync 更新 0 文件；134 个 docs 本地链接有效，git diff --check 通过。
+- 未更改 API/并发/生成协议，本批次不重复 API/race/Wire；前一批次结果保留，未算作本次新执行。无页面，ui-cases 继续不适用。
+- 未运行真实 MySQL 联调、服务部署或数据库迁移；本批次未提交或推送。

@@ -13,3 +13,11 @@
 - AC-09：原有路径、响应结构、鉴权、Proto 校验和业务行为兼容，单元/API 与文档验证实际通过。
 
 无页面改动，不部署、不迁移数据库、不修改参考项目。
+
+## 配置收敛补充验收（2026-10-01）
+
+- AC-10：仓库环境入口仅 test.yaml 和 line.yaml；test 不再依赖已删除的 config/dev/pre，保留其现有有效设置；公共基础配置可复用。
+- AC-11：主服务、migrate、seed 默认 test；LoadConfig 的空路径与目录路径选择 test.yaml；line 必须显式选择；不回退到旧配置或另一个环境。
+- AC-12：Make 仅接受 ENV=test/line，支持 CONFIG_DIR/CONFIG_FILE 覆盖；line 的部署配置仍由 APP_* 注入，文档与命令保持一致。
+
+AC-10～12 取代 AC-03 中保留 config.yaml 目录入口的旧决策，其余架构约束保持。

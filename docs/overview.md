@@ -131,15 +131,15 @@ make run
 
 ## 服务端口配置
 
-在 `config/config.yaml` 中配置：
+在 `config/test.yaml` 或 `config/line.yaml` 中覆盖共享参数：
 
 ```yaml
 server:
   port: 8080      # REST API 监听端口
-  mode: debug
+  mode: test
 
 log:
-  level: debug
+  level: warn
   format: json
 ```
 
@@ -208,15 +208,18 @@ make proto
 
 ## 项目配置
 
-### config/config.yaml
+仅保留 test 和 line，默认 test；通过 `make run ENV=line` 选择线上环境。
+文件职责、覆盖顺序及部署参数见 [环境配置](configuration.md)。
+
+### test / line
 
 ```yaml
 server:
   port: 8080      # REST API 端口（gRPC 使用 port + 1000）
-  mode: debug     # debug 或 release
+  mode: test      # test 环境；line 使用 release
 
 log:
-  level: debug    # debug, info, warn, error
+  level: warn     # test 默认 warn；line 默认 info
   format: json    # 日志格式
 ```
 

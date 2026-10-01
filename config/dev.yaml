@@ -1,3 +1,0 @@
-# Local development retains the legacy sample configuration.
-includes:
-  - config.yaml

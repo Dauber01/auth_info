@@ -10,6 +10,7 @@ docs 是全部项目业务信息的文档归属。AI 框架在 .agents/framework
 | 开始新任务、准备 PRD/原型/流程与用例 | [任务约定](tasks/README.md) | 项目流程要求 |
 | Go 开发、生成代码与命令前提 | [开发规范](development.md) | 原规范迁入，事实以源码复核 |
 | 协议入口、模块归属与调用边界 | [架构](architecture.md) | 2026-10-01 架构重构后核实 |
+| test/line 选择、配置覆盖与字段职责 | [环境配置](configuration.md) | 仅保留两个环境，默认 test |
 | 接口契约、校验和错误响应 | [API 约定](api-conventions.md) | 结合 Proto 和 handler 使用 |
 | Python API、Go 单元及页面验证 | [测试约定](testing.md) | 记录执行边界与命令 |
 | 文档模板相关的历史失败 | [已知问题](known-issues.md) | 有日期的历史观察，使用前复核 |

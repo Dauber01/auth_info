@@ -34,7 +34,7 @@ func run(ctx context.Context, path string) error {
 }
 
 func main() {
-	path := flag.String("config", "./config", "配置文件或包含 config.yaml 的目录")
+	path := flag.String("config", config.DefaultPath, "配置文件或包含 test.yaml 的目录")
 	flag.Parse()
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

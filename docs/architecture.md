@@ -55,7 +55,7 @@ gRPC → trace/错误/期限 → Protovalidate → service → biz
 - [pkg/logger](../internal/pkg/logger/) 无全局单例，输出 stdout 与可选本地滚动文件；无 ES/远端上传。
 - [pkg/trace](../internal/pkg/trace/) 只处理 context/安全 ID；[pkg/apperr](../internal/pkg/apperr/) 保留 HTTP/gRPC 错误映射。
 - 日志记录路由、方法、耗时、状态和 trace，不采集 body/query/Authorization；错误详情由错误边界记录一次。
-- [config](../internal/config/) 使用独立 Viper，优先级：默认值 < includes 顺序合并 < 入口文件 < APP_*。LoadConfig 接受具体文件或旧目录。
+- [config](../internal/config/) 使用独立 Viper，优先级：默认值 < includes 顺序合并 < 入口文件 < APP_*。LoadConfig 接受具体文件或目录；空路径默认 test 文件，目录读取 test.yaml。环境入口仅 test/line，详情见 [环境配置](configuration.md)。
 - `make build` 只编译；`make generate` 显式生成；`make mod-tidy` 显式更新依赖；Wire 版本由 go.mod/tool 锁定。
 - 数据库迁移、权限初始化仍是 [migrate](../cmd/migrate/main.go)、[seed](../cmd/seed/main.go) 显式操作，命令也负责关闭连接与日志。
 

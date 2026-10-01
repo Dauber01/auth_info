@@ -6,9 +6,14 @@ OUTPUT := $(BIN_DIR)/$(PROJECT_NAME)
 PROTO_DIR := api/proto
 GEN_DIR := api/gen
 PYTHON ?= python3
-ENV ?=
+ENV ?= test
 CONFIG_DIR ?= ./config
-CONFIG_FILE ?= $(if $(ENV),$(CONFIG_DIR)/$(ENV).yaml,$(CONFIG_DIR))
+CONFIG_FILE ?= $(CONFIG_DIR)/$(ENV).yaml
+ifneq ($(ENV),test)
+ifneq ($(ENV),line)
+$(error ENV must be test or line)
+endif
+endif
 PROTOC_GO_VERSION := v1.36.11
 PROTOC_GRPC_VERSION := v1.5.1
 GOPATH_BIN := $(shell go env GOPATH)/bin

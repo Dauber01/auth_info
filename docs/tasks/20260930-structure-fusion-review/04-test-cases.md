@@ -33,3 +33,13 @@ Go 测试不连接部署数据库；Python fixture 用内存账号，runner 退�
 未修改 Proto，无需重新生成或修改字段规则；gRPC 校验测试复用已有 RegisterRequest 注解。
 页面不适用，ui-cases.json 为 applicable=false；不运行浏览器，也不以 API 结果充当页面结果。
 文件滚动算法依赖 lumberjack，本轮验证输出接线及关闭，未宣称长期保留/压缩的压力测试通过。
+
+## 配置收敛新增用例
+
+| Case ID | AC | 前置、输入与操作 | 预期 | 自动化与清理 |
+| --- | --- | --- | --- | --- |
+| CFG-03 | 10/11 | 临时 config 下存在 test/line/旧 config；空路径、目录、显式文件加载；移除 test 后再加载目录 | 默认与目录选 test，显式 line 正常；缺 test 报错，不回退旧环境 | internal/config/config_test.go: TestLoadConfigDefaultAndDirectorySelectTest；t.TempDir/t.Chdir 自动恢复 |
+| CFG-04 | 10/12 | 直接加载仓库 test/line；line 未注入/注入 APP 凭据 | test 独立可加载；line 未配置密钥报错，注入后 release/info，数据库参数来自环境 | 同包 TestRepositoryEnvironmentProfiles；t.Setenv 自动恢复，不连接数据库 |
+| CFG-05 | 11/12 | make config 及 run/migrate/seed dry-run，默认/test/line/非法 ENV，自定义目录/文件 | 路径选择一致，非法环境早报错，覆盖有效 | 手动命令断言，无服务启动或数据库写入 |
+
+本轮不修改 API/页面/Proto 行为，复用已有 Go 回归与前轮 API 记录；不增加重复 API 测试。
